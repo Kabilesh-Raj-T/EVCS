@@ -1,45 +1,17 @@
 import React from 'react';
-import { Card, Spinner, Alert } from 'react-bootstrap';
-import './MapViewer.css';
 
 function MapViewer({ mapHtml, loading, error }) {
+  if (loading) return <p>Loading map...</p>;
+  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
+  if (!mapHtml) return <p>Initializing map...</p>;
+
   return (
-    <Card className="map-viewer">
-      <Card.Body className="map-body">
-        {loading && (
-          <div className="loading-container">
-            <Spinner animation="border" variant="primary" />
-            <p className="mt-3">Generating optimized station locations...</p>
-          </div>
-        )}
-        
-        {error && (
-          <Alert variant="danger" className="error-alert">
-            <Alert.Heading>Error Loading Map</Alert.Heading>
-            <p>{error}</p>
-            <p className="mb-0">
-              Please ensure the Flask backend is running on port 8000.
-            </p>
-          </Alert>
-        )}
-        
-        {!loading && !error && mapHtml && (
-          <div className="map-container">
-            <iframe
-              srcDoc={mapHtml}
-              title="EV Station Optimization Map"
-              className="map-iframe"
-            />
-          </div>
-        )}
-        
-        {!loading && !error && !mapHtml && (
-          <div className="loading-container">
-            <p>Initializing map...</p>
-          </div>
-        )}
-      </Card.Body>
-    </Card>
+    <iframe
+      srcDoc={mapHtml}
+      title="EV Map"
+      style={{ width: '100%', height: '600px', border: 'none' }}
+      sandbox="allow-scripts allow-same-origin"
+    />
   );
 }
 

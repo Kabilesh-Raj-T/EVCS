@@ -11,7 +11,7 @@ function App() {
   const [error, setError] = useState(null);
 
   const [params, setParams] = useState({
-    k: 5,
+    k: 0,
     resolution: 100,
     lat_min: 8.0,
     lat_max: 13.5,
