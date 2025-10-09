@@ -1,0 +1,148 @@
+🧠 Prompt for AI to Generate React Frontend
+
+Goal:
+Create a React frontend that interacts with the provided Flask backend (app.py) for EV station optimization in Tamil Nadu.
+The frontend should display the generated Folium heatmap from the backend and allow users to configure optimization parameters.
+
+⚙️ Backend Context
+
+The backend exposes one main endpoint:
+
+POST /optimize
+
+
+Request JSON body:
+
+{
+  "k": 5,
+  "resolution": 100,
+  "lat_min": 8.0,
+  "lat_max": 13.5,
+  "lon_min": 76.0,
+  "lon_max": 80.5
+}
+
+
+Response:
+
+Returns an HTML file containing a Folium map showing:
+
+Existing EV stations as a heatmap
+
+Suggested new stations as red markers
+(The HTML should be displayed inside the React app.)
+
+🎨 Frontend Requirements
+
+Framework: React (with functional components + hooks)
+
+Libraries:
+
+axios for HTTP requests
+
+react-bootstrap or MUI for UI (optional)
+
+react-leaflet (optional enhancement, but Folium HTML rendering is enough)
+
+The app should run on localhost:3000 and communicate with Flask on localhost:5000
+
+🧩 Frontend Functionality
+
+Initial Load
+
+On page load, immediately call the /optimize endpoint with default parameters:
+
+{
+  "k": 5,
+  "resolution": 100,
+  "lat_min": 8.0,
+  "lat_max": 13.5,
+  "lon_min": 76.0,
+  "lon_max": 80.5
+}
+
+
+Display the returned Folium heatmap HTML inside an <iframe> or <div>.
+
+Input Form
+
+A form should allow users to modify parameters:
+
+Latitude Min, Latitude Max
+
+Longitude Min, Longitude Max
+
+Number of Stations (k)
+
+Resolution
+
+Add a Submit button that triggers a new POST request to /optimize.
+
+Map Update
+
+When the response is received, update the <iframe> or <div> to display the new Folium HTML map.
+
+Layout
+
+Sidebar (or top bar) for inputs
+
+Main content area for the map
+
+Basic styling for clarity
+
+💻 Expected Folder Structure
+frontend/
+├── src/
+│   ├── App.js
+│   ├── components/
+│   │   └── MapViewer.js
+│   │   └── ControlPanel.js
+│   ├── index.js
+├── package.json
+backend/
+├── app.py
+├── stations.csv
+├── tamilnadu.geojson
+
+🧱 Example UI Flow
+
+App.js
+
+Imports ControlPanel and MapViewer
+
+Holds state for map HTML URL or blob
+
+Sends POST requests to backend
+
+ControlPanel.js
+
+Contains input fields for lat_min, lat_max, lon_min, lon_max, k, resolution
+
+Sends parameters to parent via props
+
+MapViewer.js
+
+Renders <iframe srcDoc={mapHtml}> for displaying Folium map content returned from backend
+
+🧩 Example Axios Call
+const response = await axios.post('http://localhost:5000/optimize', {
+  k: kValue,
+  resolution: resolutionValue,
+  lat_min: latMin,
+  lat_max: latMax,
+  lon_min: lonMin,
+  lon_max: lonMax,
+}, { responseType: 'blob' });
+
+const htmlBlob = new Blob([response.data], { type: 'text/html' });
+setMapUrl(URL.createObjectURL(htmlBlob));
+
+✅ Expected Output
+
+A functional React app where:
+
+The Folium heatmap (with Tamil Nadu boundary and EV stations) loads on startup.
+
+The user can input parameters and regenerate the map.
+
+The updated map displays dynamically without reloading the entire page.
