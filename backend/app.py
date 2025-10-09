@@ -21,7 +21,7 @@ def optimize():
         lon_min = data.get('lon_min', 76.0)
         lon_max = data.get('lon_max', 80.5)
         
-        stations_df = pd.read_csv('backend/stations.csv')
+        stations_df = pd.read_csv('stations.csv')
         
         filtered_stations = stations_df[
             (stations_df['latitude'] >= lat_min) &
@@ -40,7 +40,7 @@ def optimize():
         )
         
         try:
-            with open('backend/tamilnadu.geojson', 'r') as f:
+            with open('tamilnadu.geojson', 'r') as f:
                 tn_geojson = json.load(f)
             folium.GeoJson(
                 tn_geojson,

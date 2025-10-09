@@ -23,7 +23,7 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:8000/optimize', parameters, {
+      const response = await axios.post('/optimize', parameters, {
         responseType: 'text'
       });
       setMapHtml(response.data);
@@ -37,6 +37,7 @@ function App() {
 
   useEffect(() => {
     fetchMap(params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOptimize = (newParams) => {
