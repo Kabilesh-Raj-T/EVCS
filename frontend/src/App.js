@@ -19,9 +19,8 @@ function App() {
     lon_max: 80.5
   });
 
-  // ✅ Backend base URL (from .env)
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
-    'https://evcsapi-cugngxfxc2d8eubv.centralindia-01.azurewebsites.net';
+  // ✅ Azure backend URL (hardcoded)
+  const API_BASE_URL = 'https://evcsapi-cugngxfxc2d8eubv.centralindia-01.azurewebsites.net';
 
   // Fetch optimized map from backend
   const fetchMap = async (parameters) => {
@@ -42,7 +41,7 @@ function App() {
     }
   };
 
-  // Load initial map
+  // Load initial map on mount
   useEffect(() => {
     fetchMap(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,6 +58,7 @@ function App() {
         <h1>🚗 EV Station Optimizer - Tamil Nadu</h1>
         <p>Optimize electric vehicle charging station placement using data-driven insights</p>
       </header>
+
       <div className="app-container">
         <ControlPanel 
           params={params}
