@@ -11,7 +11,7 @@ function App() {
   const [error, setError] = useState(null);
 
   const [params, setParams] = useState({
-    k: 0,
+    k: 5, // default to 5 stations for better visualization
     resolution: 100,
     lat_min: 8.0,
     lat_max: 13.5,
@@ -19,10 +19,10 @@ function App() {
     lon_max: 80.5
   });
 
-  // ✅ Azure backend URL (hardcoded)
+  // ✅ Azure backend URL
   const API_BASE_URL = 'https://evcsapi-cugngxfxc2d8eubv.centralindia-01.azurewebsites.net';
 
-  // Fetch optimized map from backend
+  // ✅ Fetch optimized map from backend
   const fetchMap = async (parameters) => {
     setLoading(true);
     setError(null);
@@ -34,19 +34,24 @@ function App() {
       );
       setMapHtml(response.data);
     } catch (err) {
-      setError(err.message || 'Failed to load map');
       console.error('Error fetching map:', err);
+      setError(
+        err.response
+          ? `Server error (${err.response.status}): ${err.response.statusText}`
+          : 'Failed to connect to backend. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Load initial map on mount
+  // ✅ Load map once on page load
   useEffect(() => {
     fetchMap(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ Handle optimize button click
   const handleOptimize = (newParams) => {
     setParams(newParams);
     fetchMap(newParams);
@@ -56,20 +61,19 @@ function App() {
     <div className="App">
       <header className="app-header">
         <h1>🚗 EV Station Optimizer - Tamil Nadu</h1>
-        <p>Optimize electric vehicle charging station placement using data-driven insights</p>
+        <p>
+          Optimize electric vehicle charging station placement using
+          data-driven spatial insights.
+        </p>
       </header>
 
       <div className="app-container">
-        <ControlPanel 
+        <ControlPanel
           params={params}
           onOptimize={handleOptimize}
           loading={loading}
         />
-        <MapViewer 
-          mapHtml={mapHtml}
-          loading={loading}
-          error={error}
-        />
+        <MapViewer mapHtml={mapHtml} loading={loading} error={error} />
       </div>
     </div>
   );
