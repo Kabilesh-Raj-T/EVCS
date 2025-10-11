@@ -18,9 +18,10 @@ app = Flask(__name__)
 # Allow cross-origin requests from the React dev server during development
 CORS(app)
 
-# Paths to local files
-CSV_PATH = r"C:\Users\Kabilesh\Downloads\MindForge\MindForge\backend\charging_stations.csv"
-GEOJSON_PATH = r"C:\Users\Kabilesh\Downloads\MindForge\MindForge\backend\gadm41_IND_1.json"
+# Paths to local filer
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, "charging_stations.csv")
+GEOJSON_PATH = os.path.join(BASE_DIR, "gadm41_IND_1.json")
 
 # ----------------------------
 # Helpers

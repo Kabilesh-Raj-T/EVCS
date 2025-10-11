@@ -18,3 +18,18 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+# Python
+backend/venv/
+*.pyc
+__pycache__/
+
+# Replit local files
+.MindForge/.local/
+*.bin
+*.json
+
+# Node
+frontend/node_modules/
+build/
+
+.vercel
