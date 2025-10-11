@@ -6,3 +6,4 @@ geopandas
 folium
 scipy
 shapely
+gunicorn
