@@ -19,13 +19,20 @@ function App() {
     lon_max: 80.5
   });
 
+  // ✅ Backend base URL (from .env)
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
+    'https://evcsapi-cugngxfxc2d8eubv.centralindia-01.azurewebsites.net';
+
+  // Fetch optimized map from backend
   const fetchMap = async (parameters) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('/optimize', parameters, {
-        responseType: 'text'
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/optimize`,
+        parameters,
+        { responseType: 'text' }
+      );
       setMapHtml(response.data);
     } catch (err) {
       setError(err.message || 'Failed to load map');
@@ -35,6 +42,7 @@ function App() {
     }
   };
 
+  // Load initial map
   useEffect(() => {
     fetchMap(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
