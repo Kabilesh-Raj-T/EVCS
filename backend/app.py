@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import numpy as np
@@ -9,16 +10,22 @@ from shapely.geometry import Point
 from scipy.spatial import KDTree
 import tempfile
 import os
+from typing import Optional
+
+# ----------------------------
+# App + logging
+# ----------------------------
+app = Flask(__name__)
+CORS(app)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("evcsapi")
 
 # ----------------------------
 # Config
 # ----------------------------
 EARTH_RADIUS_KM = 6371.0
-app = Flask(__name__)
-# Allow cross-origin requests from the React dev server during development
-CORS(app)
 
-# Paths to local filer
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "charging_stations.csv")
 GEOJSON_PATH = os.path.join(BASE_DIR, "gadm41_IND_1.json")
@@ -80,6 +87,9 @@ def generate_candidate_points(lat_min, lat_max, lon_min, lon_max, resolution, po
     return np.unique(pts, axis=0)
 
 def k_center_greedy(existing_coords, candidate_points, k):
+    if candidate_points.size == 0 or k <= 0:
+        return []
+
     cand = candidate_points.copy()
     cand_xyz = latlon_to_unit_xyz(cand[:, 0], cand[:, 1])
 
@@ -88,6 +98,7 @@ def k_center_greedy(existing_coords, candidate_points, k):
     else:
         existing_xyz = latlon_to_unit_xyz(existing_coords[:, 0], existing_coords[:, 1])
         tree = KDTree(existing_xyz)
+        # KDTree expects xyz inputs — we already converted candidate to xyz
         chord_dist, _ = tree.query(cand_xyz, k=1)
         min_dists = chord_to_great_circle_km(chord_dist)
 
@@ -107,82 +118,90 @@ def k_center_greedy(existing_coords, candidate_points, k):
     return selected
 
 # ----------------------------
-# Load Data Once
+# Lazy-loaded data
 # ----------------------------
-print("📂 Loading CSV and GeoJSON...")
+data_loaded = False
+existing_coords = np.empty((0, 2))
+polygon = None
+tn_boundary = None
+BASE_MAP_PATH: Optional[str] = None
 
-# Load CSV
-df = pd.read_csv(CSV_PATH)
-lat_col, lon_col = detect_lat_lon_columns(df)
-df[lat_col] = to_float_series(df[lat_col])
-df[lon_col] = to_float_series(df[lon_col])
-df = df.dropna(subset=[lat_col, lon_col]).copy()
+def load_data():
+    global data_loaded, existing_coords, polygon, tn_boundary, BASE_MAP_PATH
 
-if "state" in df.columns:
-    df["state_norm"] = df["state"].astype(str).str.lower()
-    tn_df = df[df["state_norm"].str.contains("tamil", na=False)].copy()
-    if tn_df.empty:
+    if data_loaded:
+        return
+
+    logger.info("Loading CSV and GeoJSON...")
+    # CSV load
+    if not os.path.exists(CSV_PATH):
+        raise FileNotFoundError(f"CSV not found at {CSV_PATH}")
+    df = pd.read_csv(CSV_PATH)
+    lat_col, lon_col = detect_lat_lon_columns(df)
+    df[lat_col] = to_float_series(df[lat_col])
+    df[lon_col] = to_float_series(df[lon_col])
+    df = df.dropna(subset=[lat_col, lon_col]).copy()
+
+    if "state" in df.columns:
+        df["state_norm"] = df["state"].astype(str).str.lower()
+        tn_df = df[df["state_norm"].str.contains("tamil", na=False)].copy()
+        if tn_df.empty:
+            tn_df = df.copy()
+    else:
         tn_df = df.copy()
-else:
-    tn_df = df.copy()
-existing_coords = tn_df[[lat_col, lon_col]].to_numpy(dtype=float)
+    existing_coords = tn_df[[lat_col, lon_col]].to_numpy(dtype=float)
 
-# Load GeoJSON
-india = gpd.read_file(GEOJSON_PATH)
-name_col = None
-for c in ["NAME_1", "NAME_2", "NAME", "ST_NM"]:
-    if c in india.columns:
-        name_col = c
-        break
-if name_col is None:
-    raise ValueError("Could not detect state name column in GeoJSON")
+    # GeoJSON load
+    if not os.path.exists(GEOJSON_PATH):
+        raise FileNotFoundError(f"GeoJSON not found at {GEOJSON_PATH}")
+    india = gpd.read_file(GEOJSON_PATH)
+    name_col = None
+    for c in ["NAME_1", "NAME_2", "NAME", "ST_NM"]:
+        if c in india.columns:
+            name_col = c
+            break
+    if name_col is None:
+        raise ValueError("Could not detect state name column in GeoJSON")
 
-india["_n"] = india[name_col].astype(str).map(normalize_name)
-tn_boundary = india[india["_n"].str.contains("tamilnadu", na=False)].to_crs(epsg=4326)
-if tn_boundary.empty:
-    raise ValueError("Tamil Nadu polygon not found in GeoJSON")
+    india["_n"] = india[name_col].astype(str).map(normalize_name)
+    tn_boundary = india[india["_n"].str.contains("tamilnadu", na=False)].to_crs(epsg=4326)
+    if tn_boundary.empty:
+        raise ValueError("Tamil Nadu polygon not found in GeoJSON")
 
-polygon = tn_boundary.geometry.iloc[0]
+    polygon = tn_boundary.geometry.iloc[0]
 
-# ----------------------------
-# Generate Base Heatmap with Existing Stations Only
-# ----------------------------
-print("🗺️ Generating base heatmap with existing stations only...")
+    # Generate base heatmap once
+    centroid = polygon.centroid
+    base_map = folium.Map(location=[centroid.y, centroid.x], zoom_start=7)
+    folium.GeoJson(tn_boundary, name="Tamil Nadu").add_to(base_map)
 
-centroid = polygon.centroid
-base_map = folium.Map(location=[centroid.y, centroid.x], zoom_start=7)
-folium.GeoJson(tn_boundary, name="Tamil Nadu").add_to(base_map)
+    if len(existing_coords) > 0:
+        HeatMap(existing_coords.tolist(), radius=8, blur=12).add_to(base_map)
 
-if len(existing_coords) > 0:
-    # Only show existing stations
-    HeatMap(existing_coords.tolist(), radius=8, blur=12).add_to(base_map)
+    BASE_MAP_PATH = os.path.join(tempfile.gettempdir(), "existing_heatmap.html")
+    base_map.save(BASE_MAP_PATH)
+    logger.info("Base heatmap saved at %s", BASE_MAP_PATH)
 
-BASE_MAP_PATH = os.path.join(tempfile.gettempdir(), "existing_heatmap.html")
-base_map.save(BASE_MAP_PATH)
-print(f"✅ Base heatmap saved at {BASE_MAP_PATH}")
+    data_loaded = True
 
 # ----------------------------
 # Routes
 # ----------------------------
 @app.route("/", methods=["GET"])
 def base():
-    """Show the heatmap of existing stations"""
-    return send_file(BASE_MAP_PATH, mimetype="text/html")
+    try:
+        load_data()
+        if BASE_MAP_PATH and os.path.exists(BASE_MAP_PATH):
+            return send_file(BASE_MAP_PATH, mimetype="text/html")
+        return "<html><body><h3>Heatmap not available</h3></body></html>", 503
+    except Exception as e:
+        logger.exception("Error serving base heatmap")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/optimize", methods=["POST"])
 def optimize():
-    """
-    Input JSON:
-    {
-      "k": 5,
-      "resolution": 100,
-      "lat_min": 8.0,
-      "lat_max": 13.5,
-      "lon_min": 76.0,
-      "lon_max": 80.5
-    }
-    """
     try:
+        load_data()
         data = request.get_json(force=True)
         k = int(data.get("k", 5))
         resolution = int(data.get("resolution", 100))
@@ -191,23 +210,25 @@ def optimize():
         lon_min = float(data.get("lon_min", 76.0))
         lon_max = float(data.get("lon_max", 80.5))
 
-        # Generate candidates
+        # Sanity checks
+        if resolution <= 0 or resolution > 1000:
+            return jsonify({"error": "resolution out of range"}), 400
+        if k < 0 or k > 1000:
+            return jsonify({"error": "k out of range"}), 400
+
         candidates = generate_candidate_points(lat_min, lat_max, lon_min, lon_max, resolution, polygon)
         if candidates.size == 0:
             return jsonify({"error": "No candidate points found"}), 400
 
-        # Run k-Center
         optimal = k_center_greedy(existing_coords, candidates, k)
 
         # Make Folium map
         m = folium.Map(location=[polygon.centroid.y, polygon.centroid.x], zoom_start=7)
         folium.GeoJson(tn_boundary, name="Tamil Nadu").add_to(m)
 
-        # Existing stations as heatmap
         if len(existing_coords) > 0:
             HeatMap(existing_coords.tolist(), radius=8, blur=12).add_to(m)
 
-        # Add optimized stations
         for i, (lat, lon) in enumerate(optimal, start=1):
             folium.Marker(
                 location=[lat, lon],
@@ -216,18 +237,17 @@ def optimize():
                 icon=folium.Icon(color="red", icon="bolt", prefix="fa"),
             ).add_to(m)
 
-        # Save and return
         tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
         m.save(tmpfile.name)
         tmpfile.close()
-
+        logger.info("Generated optimization map: %s", tmpfile.name)
         return send_file(tmpfile.name, mimetype="text/html")
-
     except Exception as e:
+        logger.exception("Error in /optimize")
         return jsonify({"error": str(e)}), 500
 
-# ----------------------------
-# Run app
-# ----------------------------
+# Note: Do not call app.run() here for production. Gunicorn will serve the app.
+# For local dev you can run: python -m flask run or use a small helper:
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    # Local development only
+    app.run(host="0.0.0.0", port=8000)
