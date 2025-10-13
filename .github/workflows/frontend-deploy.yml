@@ -1,6 +1,5 @@
 name: Deploy React Frontend to GitHub Pages
 
-# Trigger on push to main branch
 on:
   push:
     branches:
@@ -17,27 +16,24 @@ jobs:
         working-directory: frontend
 
     steps:
-      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # 4️⃣ Build React app
       - name: Build project
         run: npm run build
 
-      # 5️⃣ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
+          branch: gh-pages      # optional, default is gh-pages
+          force_orphan: true     # optional, ensures clean deploy
