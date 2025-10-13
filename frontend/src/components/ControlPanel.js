@@ -34,7 +34,7 @@ function ControlPanel({ params, onOptimize, loading }) {
   return (
     <Card className="control-panel glass-card">
       <Card.Body>
-        <Card.Title className="panel-title">⚙️ Station Optimization</Card.Title>
+        <Card.Title className="panel-title">Station Optimization</Card.Title>
         <p className="panel-subtitle">
           Adjust parameters and explore optimized EV station placement.
         </p>
@@ -69,11 +69,11 @@ function ControlPanel({ params, onOptimize, loading }) {
             </Form.Text>
           </Form.Group>
 
-          <h6 className="section-title">🗺 Geographic Bounds</h6>
+          <h6 className="section-title">Geographic Bounds</h6>
 
           <div className="grid-inputs">
             <Form.Group>
-              <Form.Label>Lat Min</Form.Label>
+              <Form.Label>Latitude Minimum</Form.Label>
               <Form.Control
                 type="number"
                 name="lat_min"
@@ -84,7 +84,7 @@ function ControlPanel({ params, onOptimize, loading }) {
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Lat Max</Form.Label>
+              <Form.Label>Latitude Maximum</Form.Label>
               <Form.Control
                 type="number"
                 name="lat_max"
@@ -95,7 +95,7 @@ function ControlPanel({ params, onOptimize, loading }) {
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Lon Min</Form.Label>
+              <Form.Label>Longitude Minimum</Form.Label>
               <Form.Control
                 type="number"
                 name="lon_min"
@@ -106,7 +106,7 @@ function ControlPanel({ params, onOptimize, loading }) {
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Lon Max</Form.Label>
+              <Form.Label>Longitude Maximum</Form.Label>
               <Form.Control
                 type="number"
                 name="lon_max"
