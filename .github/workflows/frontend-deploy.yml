@@ -15,9 +15,6 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
       - name: Checkout repository
@@ -32,27 +29,32 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Ensure homepage field
-        run: |
-          npm pkg set homepage='https://kabilesh-raj-t.github.io/EVCS'
-
       - name: Install dependencies
+        working-directory: frontend
         run: npm ci
 
+      - name: Ensure homepage field
+        working-directory: frontend
+        run: npm pkg set homepage='https://kabilesh-raj-t.github.io/EVCS'
+
       - name: Build React app
+        working-directory: frontend
         run: npm run build
 
+      - name: Verify build output
+        run: ls -R frontend/build
+
       - name: Copy index.html to 404.html
-        run: cp build/index.html build/404.html
+        run: cp frontend/build/index.html frontend/build/404.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./frontend/build
           publish_branch: gh-pages
           force_orphan: true
