@@ -1,6 +1,5 @@
 name: Deploy React Frontend to GitHub Pages
 
-# Trigger on push to main branch
 on:
   push:
     branches:
@@ -8,36 +7,54 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
-      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
-        run: npm install
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      # 4️⃣ Build React app
-      - name: Build project
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Ensure homepage field
+        working-directory: frontend
+        run: npm pkg set homepage='https://kabilesh-raj-t.github.io/EVCS'
+
+      - name: Build React app
+        working-directory: frontend
         run: npm run build
 
-      # 5️⃣ Deploy to GitHub Pages
+      - name: Verify build output
+        run: ls -R frontend/build
+
+      - name: Copy index.html to 404.html
+        run: cp frontend/build/index.html frontend/build/404.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./frontend/build
+          publish_branch: gh-pages
+          force_orphan: true
