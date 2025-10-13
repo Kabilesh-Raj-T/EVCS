@@ -172,5 +172,6 @@
 
 /* Firefox */
 .control-panel input[type=number] {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
