@@ -4,22 +4,35 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'                         # trigger only on backend folder changes
+      - '.github/workflows/backend-deploy.yml'  # or this workflow file itself
   workflow_dispatch:
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
-  build:
+  build-and-deploy-backend:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         working-directory: ./backend
@@ -31,33 +44,10 @@ jobs:
         working-directory: ./backend
         run: zip -r ../backend-package.zip ./*
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-package
-          path: backend-package.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: write   # 🔑 needed for deploy step
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-package
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App (Run From Package)
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'evcsapi'
           slot-name: 'Production'
           package: backend-package.zip
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
