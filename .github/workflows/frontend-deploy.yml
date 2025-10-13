@@ -7,9 +7,10 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-deploy.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write  # 🔑 allow pushing to gh-pages
+  contents: write  # needed to push to gh-pages branch
 
 jobs:
   build-and-deploy:
@@ -19,24 +20,46 @@ jobs:
         working-directory: frontend
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+      # 3️⃣ Cache npm dependencies
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
+      # 4️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci  # faster, deterministic install
+
+      # 5️⃣ Ensure homepage is set in package.json
+      - name: Ensure homepage field
+        run: |
+          if ! grep -q '"homepage"' package.json; then
+            echo 'Adding homepage field to package.json'
+            npm pkg set homepage="https://<username>.github.io/<repository-name>"
+          fi
+
+      # 6️⃣ Build React app
       - name: Build project
         run: npm run build
 
+      # 7️⃣ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
-          publish_branch: gh-pages  # ✅ corrected input
+          publish_branch: gh-pages
           force_orphan: true
