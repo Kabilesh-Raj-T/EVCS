@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'                         # only trigger on frontend folder changes
+      - 'frontend/**'                         # trigger only on frontend folder changes
       - '.github/workflows/frontend-deploy.yml'  # or this workflow file itself
   workflow_dispatch:
 
@@ -20,18 +20,15 @@ jobs:
         working-directory: frontend
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3️⃣ Cache npm dependencies
-      - name: Cache Node.js modules
+      - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.npm
@@ -39,24 +36,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # 4️⃣ Ensure homepage is set
       - name: Ensure homepage field in package.json
         run: |
-          npm pkg set homepage="https://Kabilesh-Raj-T.github.io/EVCS"
-
-      # 5️⃣ Install dependencies
-      - name: Install dependencies
-        run: npm ci
-
-      # 6️⃣ Build React app
-      - name: Build project
-        run: npm run build
-
-      # 7️⃣ Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-          publish_branch: gh-pages
-          force_orphan: true
+          npm pkg set homepage="h
