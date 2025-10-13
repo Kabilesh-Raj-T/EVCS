@@ -7,12 +7,12 @@ on:
     paths:
       - 'frontend/**'
       - 'backend/**'
-      - '.github/workflows/deploy.yml'
+      - '.github/workflows/full-deploy.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
-  id-token: write
+  contents: write  # GH Pages and artifacts
+  id-token: write  # Azure login
 
 jobs:
   # ---------------------------
@@ -33,7 +33,6 @@ jobs:
         with:
           node-version: '20'
 
-      # ------------------- Node.js caching -------------------
       - name: Cache Node.js modules
         uses: actions/cache@v3
         with:
@@ -43,9 +42,13 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm ci  # faster and deterministic install
+        run: npm ci
 
-      - name: Build React app
+      - name: Ensure homepage field
+        run: |
+          npm pkg set homepage="https://Kabilesh-Raj-T.github.io/EVCS"
+
+      - name: Build project
         run: npm run build
 
       - name: Deploy to GitHub Pages
@@ -61,7 +64,7 @@ jobs:
   # ---------------------------
   backend:
     runs-on: ubuntu-latest
-    needs: frontend
+    needs: frontend  # wait for frontend deployment first
     permissions:
       contents: write
       id-token: write
@@ -75,7 +78,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      # ------------------- Pip caching -------------------
       - name: Cache pip
         uses: actions/cache@v3
         with:
@@ -94,25 +96,10 @@ jobs:
         working-directory: ./backend
         run: zip -r ../backend-package.zip ./*
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-package
-          path: backend-package.zip
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-package
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App (Run From Package)
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'evcsapi'
           slot-name: 'Production'
           package: backend-package.zip
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
