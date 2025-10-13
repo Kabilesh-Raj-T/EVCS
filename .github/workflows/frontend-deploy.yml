@@ -39,17 +39,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # 4️⃣ Install dependencies
-      - name: Install dependencies
-        run: npm ci  # faster, deterministic install
-
-      # 5️⃣ Ensure homepage is set in package.json
-      - name: Ensure homepage field
+      # 4️⃣ Ensure homepage is set
+      - name: Ensure homepage field in package.json
         run: |
-          if ! grep -q '"homepage"' package.json; then
-            echo 'Adding homepage field to package.json'
-            npm pkg set homepage="https://<username>.github.io/<repository-name>"
-          fi
+          npm pkg set homepage="https://Kabilesh-Raj-T.github.io/EVCS"
+
+      # 5️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci  # deterministic install
 
       # 6️⃣ Build React app
       - name: Build project
