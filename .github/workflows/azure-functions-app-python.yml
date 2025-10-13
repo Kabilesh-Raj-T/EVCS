@@ -28,9 +28,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Package backend for deployment
-        run: |
-          cd backend
-          zip -r ../backend-package.zip ./*
+        working-directory: ./backend
+        run: zip -r ../backend-package.zip ./*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -43,7 +42,7 @@ jobs:
     needs: build
     permissions:
       id-token: write
-      contents: read
+      contents: write   # 🔑 needed for deploy step
 
     steps:
       - name: Download artifact
