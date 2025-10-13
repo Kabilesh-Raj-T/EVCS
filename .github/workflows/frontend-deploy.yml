@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'                         # trigger only on frontend folder changes
-      - '.github/workflows/frontend-deploy.yml'  # or this workflow file itself
+      - 'frontend/**'
+      - '.github/workflows/frontend-deploy.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write  # needed to push to gh-pages branch
+  contents: write
 
 jobs:
   build-and-deploy:
@@ -36,14 +36,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Ensure homepage field in package.json
+      - name: Ensure homepage field
         run: |
-          npm pkg set homepage="https://Kabilesh-Raj-T.github.io/EVCS"
+          npm pkg set homepage='https://Kabilesh-Raj-T.github.io/EVCS'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build React app
+      - name: Build project
         run: npm run build
 
       - name: Deploy to GitHub Pages
