@@ -38,4 +38,18 @@ jobs:
 
       - name: Ensure homepage field in package.json
         run: |
-          npm pkg set homepage="h
+          npm pkg set homepage="https://Kabilesh-Raj-T.github.io/EVCS"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          publish_branch: gh-pages
+          force_orphan: true
