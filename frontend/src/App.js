@@ -11,7 +11,7 @@ function App() {
   const [error, setError] = useState(null);
 
   const [params, setParams] = useState({
-    k: 5, // default to 5 stations for better visualization
+    k: 0, // default to 0 stations for better visualization
     resolution: 100,
     lat_min: 8.0,
     lat_max: 13.5,
@@ -60,7 +60,7 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>🚗 EV Station Optimizer - Tamil Nadu</h1>
+        <h1>Placitude</h1>
         <p>
           Optimize electric vehicle charging station placement using
           data-driven spatial insights.

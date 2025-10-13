@@ -9,7 +9,7 @@ function ControlPanel({ params, onOptimize, loading }) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: parseFloat(value) || 0
+      [name]: value === '' ? '' : parseFloat(value)
     }));
   };
 
@@ -32,28 +32,29 @@ function ControlPanel({ params, onOptimize, loading }) {
   };
 
   return (
-    <Card className="control-panel">
+    <Card className="control-panel glass-card">
       <Card.Body>
-        <Card.Title className="panel-title">⚙️ Optimization Parameters</Card.Title>
+        <Card.Title className="panel-title">⚙️ Station Optimization</Card.Title>
+        <p className="panel-subtitle">
+          Adjust parameters and explore optimized EV station placement.
+        </p>
+
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
-            <Form.Label>Number of New Stations (k)</Form.Label>
+            <Form.Label>Number of New Stations</Form.Label>
             <Form.Control
               type="number"
               name="k"
               value={formData.k}
               onChange={handleChange}
               min="1"
-              max="50"
+              max="150"
               required
             />
-            <Form.Text className="text-muted">
-              Number of new EV stations to suggest
-            </Form.Text>
           </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Resolution</Form.Label>
+          <Form.Group className="mb-4">
+            <Form.Label>Grid Resolution</Form.Label>
             <Form.Control
               type="number"
               name="resolution"
@@ -63,79 +64,76 @@ function ControlPanel({ params, onOptimize, loading }) {
               max="500"
               required
             />
-            <Form.Text className="text-muted">
-              Grid resolution for optimization (higher = more precise but slower)
+            <Form.Text className="text-hint">
+              Higher resolution = finer accuracy (but slower)
             </Form.Text>
           </Form.Group>
 
-          <hr />
+          <h6 className="section-title">🗺 Geographic Bounds</h6>
 
-          <h6 className="section-title">Geographic Bounds</h6>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Latitude Min</Form.Label>
-            <Form.Control
-              type="number"
-              name="lat_min"
-              value={formData.lat_min}
-              onChange={handleChange}
-              step="0.1"
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Latitude Max</Form.Label>
-            <Form.Control
-              type="number"
-              name="lat_max"
-              value={formData.lat_max}
-              onChange={handleChange}
-              step="0.1"
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Longitude Min</Form.Label>
-            <Form.Control
-              type="number"
-              name="lon_min"
-              value={formData.lon_min}
-              onChange={handleChange}
-              step="0.1"
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Longitude Max</Form.Label>
-            <Form.Control
-              type="number"
-              name="lon_max"
-              value={formData.lon_max}
-              onChange={handleChange}
-              step="0.1"
-              required
-            />
-          </Form.Group>
+          <div className="grid-inputs">
+            <Form.Group>
+              <Form.Label>Lat Min</Form.Label>
+              <Form.Control
+                type="number"
+                name="lat_min"
+                value={formData.lat_min}
+                onChange={handleChange}
+                step="0.1"
+                required
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Lat Max</Form.Label>
+              <Form.Control
+                type="number"
+                name="lat_max"
+                value={formData.lat_max}
+                onChange={handleChange}
+                step="0.1"
+                required
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Lon Min</Form.Label>
+              <Form.Control
+                type="number"
+                name="lon_min"
+                value={formData.lon_min}
+                onChange={handleChange}
+                step="0.1"
+                required
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Lon Max</Form.Label>
+              <Form.Control
+                type="number"
+                name="lon_max"
+                value={formData.lon_max}
+                onChange={handleChange}
+                step="0.1"
+                required
+              />
+            </Form.Group>
+          </div>
 
           <div className="button-group">
-            <Button 
-              variant="primary" 
-              type="submit" 
+            <Button
+              variant="primary"
+              type="submit"
               disabled={loading}
-              className="w-100 mb-2"
+              className="w-100 mb-2 action-btn"
             >
-              {loading ? 'Optimizing...' : '🔍 Optimize Stations'}
+              {loading ? 'Optimizing...' : '🔍 Run Optimization'}
             </Button>
-            <Button 
-              variant="outline-secondary" 
+            <Button
+              variant="outline-light"
               onClick={handleReset}
               disabled={loading}
-              className="w-100"
+              className="w-100 reset-btn"
             >
-              Reset to Defaults
+              Reset Defaults
             </Button>
           </div>
         </Form>

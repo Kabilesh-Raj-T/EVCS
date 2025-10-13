@@ -1,32 +1,40 @@
 .App {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: black;
+  background-attachment: fixed;
 }
 
 .app-header {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 20px;
+  background: linear-gradient(rgba(20, 20, 74, 0.7),black);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 15px;
+  padding-bottom: 10px;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .app-header h1 {
-  color: #667eea;
+  color: #a2d6ff;
   margin: 0;
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
+  text-shadow: 0 0 15px rgba(162, 214, 255, 0.5);
+  letter-spacing: 1px;
 }
 
 .app-header p {
-  color: #666;
+  color: #c4e0ff;
   margin: 5px 0 0 0;
   font-size: 1rem;
+  text-shadow: 0 0 10px rgba(196, 224, 255, 0.3);
 }
 
 .app-container {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 15px;
+  padding: 15px;
   max-width: 1600px;
   margin: 0 auto;
   min-height: calc(100vh - 100px);

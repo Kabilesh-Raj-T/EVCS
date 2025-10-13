@@ -26,7 +26,6 @@ __pycache__/
 # Replit local files
 .MindForge/.local/
 *.bin
-*.json
 
 # Node
 frontend/node_modules/

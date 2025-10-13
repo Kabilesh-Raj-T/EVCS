@@ -1,26 +1,31 @@
 .map-viewer {
   flex: 1;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: transparent !important;
+  box-shadow: 0 6px 24px rgba(2,6,23,0.45);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
 .map-body {
-  padding: 0;
-  height: calc(100vh - 140px);
+  padding: 0 !important;
+  height: calc(100vh - 280px); /* further reduced height to fit viewport */
   position: relative;
+  background: transparent !important;
 }
 
 .map-container {
   width: 100%;
   height: 100%;
+  background: transparent;
 }
 
 .map-iframe {
   width: 100%;
   height: 100%;
   border: none;
+  background: transparent;
+  display: block;
 }
 
 .loading-container {
@@ -29,7 +34,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #667eea;
+  color: #8fa0ee;
 }
 
 .error-alert {
@@ -38,6 +43,6 @@
 
 @media (max-width: 1200px) {
   .map-body {
-    height: 600px;
+    height: 550px; /* smaller for smaller screens */
   }
 }
