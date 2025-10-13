@@ -1,19 +1,64 @@
-name: Build and Deploy Python App to Azure Web App - evcsapi
+name: Full Deployment - Frontend & Backend
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write  # needed for GH Pages deployment and artifact handling
+  id-token: write  # needed for Azure login
+
 jobs:
-  build:
+  # ---------------------------
+  # 1️⃣ Frontend Job - React
+  # ---------------------------
+  frontend:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          publish_branch: gh-pages
+          force_orphan: true
+
+  # ---------------------------
+  # 2️⃣ Backend Job - Python
+  # ---------------------------
+  backend:
+    runs-on: ubuntu-latest
+    needs: frontend  # optional, ensures frontend deploys first
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -37,14 +82,6 @@ jobs:
           name: backend-package
           path: backend-package.zip
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: write   # 🔑 needed for deploy step
-
-    steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
