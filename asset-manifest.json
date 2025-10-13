@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/EVCS/static/css/main.cb1a783e.css",
+    "main.js": "/EVCS/static/js/main.a0553c2d.js",
+    "index.html": "/EVCS/index.html",
+    "main.cb1a783e.css.map": "/EVCS/static/css/main.cb1a783e.css.map",
+    "main.a0553c2d.js.map": "/EVCS/static/js/main.a0553c2d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.cb1a783e.css",
+    "static/js/main.a0553c2d.js"
+  ]
+}
