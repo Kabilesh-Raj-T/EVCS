@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-deploy.yml'
+      - 'frontend/**'                         # only trigger on frontend folder changes
+      - '.github/workflows/frontend-deploy.yml'  # or this workflow file itself
   workflow_dispatch:
 
 permissions:
@@ -46,7 +46,7 @@ jobs:
 
       # 5️⃣ Install dependencies
       - name: Install dependencies
-        run: npm ci  # deterministic install
+        run: npm ci
 
       # 6️⃣ Build React app
       - name: Build project
