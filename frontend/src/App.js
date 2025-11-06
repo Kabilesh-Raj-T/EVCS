@@ -19,10 +19,10 @@ function App() {
     lon_max: 80.5
   });
 
-  // ✅ Azure backend URL
+  //  Azure backend URL
   const API_BASE_URL = 'https://evcsapi-cugngxfxc2d8eubv.centralindia-01.azurewebsites.net';
 
-  // ✅ Fetch optimized map from backend
+  //  Fetch optimized map from backend
   const fetchMap = async (parameters) => {
     setLoading(true);
     setError(null);
@@ -45,13 +45,13 @@ function App() {
     }
   };
 
-  // ✅ Load map once on page load
+  //  Load map once on page load
   useEffect(() => {
     fetchMap(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Handle optimize button click
+  //  Handle optimize button click
   const handleOptimize = (newParams) => {
     setParams(newParams);
     fetchMap(newParams);
