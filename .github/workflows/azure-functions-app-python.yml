@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write   # REQUIRED for Azure login
 
 jobs:
   build-and-deploy-backend:
@@ -43,10 +44,15 @@ jobs:
         working-directory: ./backend
         run: zip -r ../backend-package.zip .
 
+      # 🔑 THIS WAS MISSING
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: evcsapi
           slot-name: Production
           package: backend-package.zip
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
