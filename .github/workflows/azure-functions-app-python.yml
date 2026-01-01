@@ -5,13 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'                         # trigger only on backend folder changes
-      - '.github/workflows/backend-deploy.yml'  # or this workflow file itself
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
   build-and-deploy-backend:
@@ -42,12 +41,12 @@ jobs:
 
       - name: Package backend for deployment
         working-directory: ./backend
-        run: zip -r ../backend-package.zip ./*
+        run: zip -r ../backend-package.zip .
 
-      - name: Deploy to Azure Web App (Run From Package)
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'evcsapi'
-          slot-name: 'Production'
+          app-name: evcsapi
+          slot-name: Production
           package: backend-package.zip
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
