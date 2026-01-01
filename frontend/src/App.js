@@ -27,12 +27,15 @@ function App() {
     setLoading(true);
     setError(null);
     try {
+      // FIX: Removed { responseType: 'text' } so axios automatically parses the JSON response
       const response = await axios.post(
         `${API_BASE_URL}/optimize`,
-        parameters,
-        { responseType: 'text' }
+        parameters
       );
-      setMapHtml(response.data);
+      
+      // FIX: Access the 'map_html' property from the JSON object returned by app.py
+      setMapHtml(response.data.map_html);
+      
     } catch (err) {
       console.error('Error fetching map:', err);
       setError(
