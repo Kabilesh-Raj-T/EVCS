@@ -1,267 +1,194 @@
 import logging
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS
+import tempfile
+from functools import lru_cache
+
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import h3
+
+from shapely.geometry import shape
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+from scipy.spatial import KDTree
+
 import folium
 from folium.plugins import HeatMap
-from shapely.geometry import Point
-from scipy.spatial import KDTree
-import tempfile
-import os
-from typing import Optional
 
-# ----------------------------
-# App + logging
-# ----------------------------
+# ============================================================
+# CONFIG (KNOWN FACTS)
+# ============================================================
+
+CSV_PATH = "charging_stations.csv"
+GEOJSON_PATH = "gadm41_IND_1.json"
+
+LAT_COL = "latitude"
+LON_COL = "longitude"
+
+H3_RESOLUTION = 7           # ~5km hexes (state scale)
+MAX_K = 500
+EARTH_RADIUS_KM = 6371.0
+
+# ============================================================
+# LOGGING
+# ============================================================
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("evcs-api")
+
+# ============================================================
+# FLASK
+# ============================================================
+
 app = Flask(__name__)
 CORS(app)
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("evcsapi")
+# ============================================================
+# SPHERICAL DISTANCE UTILITIES
+# ============================================================
 
-# ----------------------------
-# Config
-# ----------------------------
-EARTH_RADIUS_KM = 6371.0
+def latlon_to_unit_xyz(lat, lon):
+    lat = np.radians(lat)
+    lon = np.radians(lon)
+    return np.column_stack((
+        np.cos(lat) * np.cos(lon),
+        np.cos(lat) * np.sin(lon),
+        np.sin(lat)
+    ))
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CSV_PATH = os.path.join(BASE_DIR, "charging_stations.csv")
-GEOJSON_PATH = os.path.join(BASE_DIR, "gadm41_IND_1.json")
 
-# ----------------------------
-# Helpers
-# ----------------------------
-def normalize_name(s: str) -> str:
-    return str(s).replace(" ", "").lower()
+def chord_to_km(chord):
+    half = np.clip(chord / 2.0, 0.0, 1.0)
+    return EARTH_RADIUS_KM * (2 * np.arcsin(half))
 
-def detect_lat_lon_columns(df: pd.DataFrame):
-    lat_col = lon_col = None
-    for c in df.columns:
-        n = c.lower()
-        if lat_col is None and "lat" in n:
-            lat_col = c
-        if lon_col is None and ("lon" in n or "lng" in n or "long" in n):
-            lon_col = c
-    if lat_col is None or lon_col is None:
-        raise ValueError(f"Could not detect lat/lon columns. Columns: {list(df.columns)}")
-    return lat_col, lon_col
 
-def to_float_series(s: pd.Series):
-    return (
-        s.astype(str)
-        .str.replace(",", "", regex=False)
-        .str.strip()
-        .replace({"": np.nan})
-        .astype(float)
-    )
-
-def latlon_to_unit_xyz(lat_arr, lon_arr):
-    lat = np.radians(lat_arr)
-    lon = np.radians(lon_arr)
-    x = np.cos(lat) * np.cos(lon)
-    y = np.cos(lat) * np.sin(lon)
-    z = np.sin(lat)
-    return np.column_stack((x, y, z))
-
-def chord_to_great_circle_km(chord_dist):
-    half = np.clip(chord_dist / 2.0, 0.0, 1.0)
-    angles = 2.0 * np.arcsin(half)
-    return EARTH_RADIUS_KM * angles
-
-def generate_candidate_points(lat_min, lat_max, lon_min, lon_max, resolution, polygon):
-    lat_vals = np.linspace(lat_min, lat_max, resolution)
-    lon_vals = np.linspace(lon_min, lon_max, resolution)
-    lat_grid, lon_grid = np.meshgrid(lat_vals, lon_vals, indexing="ij")
-    lat_flat = lat_grid.ravel()
-    lon_flat = lon_grid.ravel()
-
-    pts_gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(lon_flat, lat_flat), crs="EPSG:4326")
-    mask = pts_gdf.intersects(polygon)
-    if mask.sum() == 0:
-        return np.empty((0, 2), dtype=float)
-    valid_lat = lat_flat[mask.values]
-    valid_lon = lon_flat[mask.values]
-    pts = np.column_stack([valid_lat, valid_lon])
-    return np.unique(pts, axis=0)
-
-def k_center_greedy(existing_coords, candidate_points, k):
-    if candidate_points.size == 0 or k <= 0:
+def k_center_greedy(existing, candidates, k):
+    if k <= 0 or len(candidates) == 0:
         return []
 
-    cand = candidate_points.copy()
-    cand_xyz = latlon_to_unit_xyz(cand[:, 0], cand[:, 1])
+    cand_xyz = latlon_to_unit_xyz(candidates[:, 0], candidates[:, 1])
 
-    if existing_coords.size == 0:
-        min_dists = np.full(len(cand), np.inf)
+    if len(existing) == 0:
+        min_dist = np.full(len(candidates), np.inf)
     else:
-        existing_xyz = latlon_to_unit_xyz(existing_coords[:, 0], existing_coords[:, 1])
-        tree = KDTree(existing_xyz)
-        # KDTree expects xyz inputs — we already converted candidate to xyz
-        chord_dist, _ = tree.query(cand_xyz, k=1)
-        min_dists = chord_to_great_circle_km(chord_dist)
+        tree = KDTree(latlon_to_unit_xyz(existing[:, 0], existing[:, 1]))
+        chord, _ = tree.query(cand_xyz, k=1)
+        min_dist = chord_to_km(chord)
 
     selected = []
-    for _ in range(k):
-        best_idx = int(np.argmax(min_dists))
-        if min_dists[best_idx] == -1:
-            break
-        best_point = tuple(cand[best_idx])
-        selected.append(best_point)
 
-        new_xyz = cand_xyz[best_idx : best_idx + 1]
-        chord = np.linalg.norm(cand_xyz - new_xyz, axis=1)
-        dists_km = chord_to_great_circle_km(chord)
-        min_dists = np.minimum(min_dists, dists_km)
-        min_dists[best_idx] = -1
+    for _ in range(k):
+        idx = int(np.argmax(min_dist))
+        if min_dist[idx] < 0:
+            break
+
+        selected.append(tuple(candidates[idx]))
+
+        chord = np.linalg.norm(cand_xyz - cand_xyz[idx], axis=1)
+        min_dist = np.minimum(min_dist, chord_to_km(chord))
+        min_dist[idx] = -1
+
     return selected
 
-# ----------------------------
-# Lazy-loaded data
-# ----------------------------
-data_loaded = False
-existing_coords = np.empty((0, 2))
-polygon = None
-tn_boundary = None
-BASE_MAP_PATH: Optional[str] = None
+# ============================================================
+# LOAD BASE DATA ONCE (PROCESS START)
+# ============================================================
 
-def load_data():
-    global data_loaded, existing_coords, polygon, tn_boundary, BASE_MAP_PATH
+logger.info("Loading base geospatial data")
 
-    if data_loaded:
-        return
+states_gdf = gpd.read_file(GEOJSON_PATH).to_crs(epsg=4326)
+STATE_GEOMS = {
+    row["NAME_1"]: row.geometry
+    for _, row in states_gdf.iterrows()
+}
 
-    logger.info("Loading CSV and GeoJSON...")
-    # CSV load
-    if not os.path.exists(CSV_PATH):
-        raise FileNotFoundError(f"CSV not found at {CSV_PATH}")
-    df = pd.read_csv(CSV_PATH)
-    lat_col, lon_col = detect_lat_lon_columns(df)
-    df[lat_col] = to_float_series(df[lat_col])
-    df[lon_col] = to_float_series(df[lon_col])
-    df = df.dropna(subset=[lat_col, lon_col]).copy()
+stations_df = pd.read_csv(CSV_PATH)
+stations_gdf = gpd.GeoDataFrame(
+    stations_df,
+    geometry=gpd.points_from_xy(stations_df[LON_COL], stations_df[LAT_COL]),
+    crs="EPSG:4326"
+)
 
-    if "state" in df.columns:
-        df["state_norm"] = df["state"].astype(str).str.lower()
-        tn_df = df[df["state_norm"].str.contains("tamil", na=False)].copy()
-        if tn_df.empty:
-            tn_df = df.copy()
-    else:
-        tn_df = df.copy()
-    existing_coords = tn_df[[lat_col, lon_col]].to_numpy(dtype=float)
+# ============================================================
+# REGION CACHE (SAFE + FAST)
+# ============================================================
 
-    # GeoJSON load
-    if not os.path.exists(GEOJSON_PATH):
-        raise FileNotFoundError(f"GeoJSON not found at {GEOJSON_PATH}")
-    india = gpd.read_file(GEOJSON_PATH)
-    name_col = None
-    for c in ["NAME_1", "NAME_2", "NAME", "ST_NM"]:
-        if c in india.columns:
-            name_col = c
-            break
-    if name_col is None:
-        raise ValueError("Could not detect state name column in GeoJSON")
+@lru_cache(maxsize=64)
+def load_region(region_name):
+    if region_name not in STATE_GEOMS:
+        raise ValueError("Invalid region name")
 
-    india["_n"] = india[name_col].astype(str).map(normalize_name)
-    tn_boundary = india[india["_n"].str.contains("tamilnadu", na=False)].to_crs(epsg=4326)
-    if tn_boundary.empty:
-        raise ValueError("Tamil Nadu polygon not found in GeoJSON")
+    polygon = STATE_GEOMS[region_name].unary_union
 
-    polygon = tn_boundary.geometry.iloc[0]
+    # ---- Existing stations (spatial truth)
+    stations = stations_gdf[
+        stations_gdf.within(polygon)
+    ][[LAT_COL, LON_COL]].to_numpy()
 
-    # Generate base heatmap once
-    centroid = polygon.centroid
-    base_map = folium.Map(location=[centroid.y, centroid.x], zoom_start=7)
-    folium.GeoJson(tn_boundary, name="Tamil Nadu").add_to(base_map)
+    # ---- H3 candidate generation
+    geojson = shape(polygon).__geo_interface__
+    hexes = h3.polyfill_geojson(
+        geojson,
+        res=H3_RESOLUTION,
+        geo_json_conformant=True
+    )
 
-    if len(existing_coords) > 0:
-        HeatMap(existing_coords.tolist(), radius=8, blur=12).add_to(base_map)
+    candidates = np.array([
+        h3.h3_to_geo(h) for h in hexes
+    ])
 
-    BASE_MAP_PATH = os.path.join(tempfile.gettempdir(), "existing_heatmap.html")
-    base_map.save(BASE_MAP_PATH)
-    logger.info("Base heatmap saved at %s", BASE_MAP_PATH)
+    logger.info(
+        "Region ready: %s | stations=%d | candidates=%d",
+        region_name, len(stations), len(candidates)
+    )
 
-    data_loaded = True
+    return polygon, stations, candidates
 
-# ----------------------------
-# Routes
-# ----------------------------
-@app.route("/", methods=["GET"])
-def base():
-    try:
-        load_data()
-        if BASE_MAP_PATH and os.path.exists(BASE_MAP_PATH):
-            return send_file(BASE_MAP_PATH, mimetype="text/html")
-        return "<html><body><h3>Heatmap not available</h3></body></html>", 503
-    except Exception as e:
-        logger.exception("Error serving base heatmap")
-        return jsonify({"error": str(e)}), 500
+# ============================================================
+# ROUTES
+# ============================================================
+
+@app.route("/regions", methods=["GET"])
+def regions():
+    return jsonify(sorted(STATE_GEOMS.keys()))
+
 
 @app.route("/optimize", methods=["POST"])
 def optimize():
-    try:
-        load_data()
-        data = request.get_json(force=True)
-        k = int(data.get("k", 5))
-        resolution = int(data.get("resolution", 100))
-        lat_min = float(data.get("lat_min", 8.0))
-        lat_max = float(data.get("lat_max", 13.5))
-        lon_min = float(data.get("lon_min", 76.0))
-        lon_max = float(data.get("lon_max", 80.5))
+    data = request.get_json(force=True)
 
-        # Sanity checks
-        if resolution <= 0 or resolution > 1000:
-            return jsonify({"error": "resolution out of range"}), 400
-        if k < 0 or k > 1000:
-            return jsonify({"error": "k out of range"}), 400
+    region = data.get("region", "Tamil Nadu")
+    k = int(data.get("k", 5))
 
-        candidates = generate_candidate_points(lat_min, lat_max, lon_min, lon_max, resolution, polygon)
-        if candidates.size == 0:
-            return jsonify({"error": "No candidate points found"}), 400
+    if k < 1 or k > MAX_K:
+        return jsonify({"error": "k out of range"}), 400
 
-        optimal = k_center_greedy(existing_coords, candidates, k)
+    polygon, stations, candidates = load_region(region)
+    optimal = k_center_greedy(stations, candidates, k)
 
-        # Make Folium map
-        m = folium.Map(location=[polygon.centroid.y, polygon.centroid.x], zoom_start=7)
-        folium.GeoJson(tn_boundary, name="Tamil Nadu").add_to(m)
+    centroid = polygon.centroid
+    m = folium.Map(location=[centroid.y, centroid.x], zoom_start=7)
+    folium.GeoJson(polygon).add_to(m)
 
-        if len(existing_coords) > 0:
-            HeatMap(existing_coords.tolist(), radius=8, blur=12).add_to(m)
+    if len(stations) > 0:
+        HeatMap(stations.tolist()).add_to(m)
 
-        for i, (lat, lon) in enumerate(optimal, start=1):
-            folium.Marker(
-                location=[lat, lon],
-                popup=f"Suggested #{i}: ({lat:.6f}, {lon:.6f})",
-                tooltip=f"New EV #{i}",
-                icon=folium.Icon(color="red", icon="bolt", prefix="fa"),
-            ).add_to(m)
+    for i, (lat, lon) in enumerate(optimal, 1):
+        folium.Marker(
+            location=[lat, lon],
+            tooltip=f"Suggested #{i}",
+            icon=folium.Icon(color="red", icon="bolt", prefix="fa"),
+        ).add_to(m)
 
-        tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
-        m.save(tmpfile.name)
-        tmpfile.close()
-        
-        # Read the file content
-        with open(tmpfile.name, "r", encoding="utf-8") as f:
-            map_content = f.read()
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
+    m.save(tmp.name)
+    tmp.close()
 
-        # Prepare points list
-        points_data = [{"id": i, "lat": lat, "lon": lon} for i, (lat, lon) in enumerate(optimal, start=1)]
+    return send_file(tmp.name, mimetype="text/html")
 
-        logger.info("Generated optimization map: %s", tmpfile.name)
-        
-        # Return JSON with map HTML and points
-        return jsonify({
-            "map_html": map_content,
-            "points": points_data
-        })
+# ============================================================
+# ENTRY
+# ============================================================
 
-    except Exception as e:
-        logger.exception("Error in /optimize")
-        return jsonify({"error": str(e)}), 500
-
-# Note: Do not call app.run() here for production. Gunicorn will serve the app.
-# For local dev you can run: python -m flask run or use a small helper:
 if __name__ == "__main__":
-    # Local development only
     app.run(host="0.0.0.0", port=8000)
