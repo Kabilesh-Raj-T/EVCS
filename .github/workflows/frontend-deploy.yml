@@ -57,4 +57,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/build
           publish_branch: gh-pages
-          force_orphan: true
+          force_orphan: true #s
