@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'                         # trigger only on backend folder changes
-      - '.github/workflows/backend-deploy.yml'  # or this workflow file itself
+      - 'backend/**'                         
+      - '.github/workflows/azure-functions-app-python.yml'  
   workflow_dispatch:
 
 permissions:
