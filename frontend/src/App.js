@@ -20,7 +20,7 @@ function App() {
   });
 
   //  Azure backend URL
-  const API_BASE_URL = 'https://evcsapi-cugngxfxc2d8eubv.centralindia-01.azurewebsites.net';
+  const API_BASE_URL = 'https://evcs-c5xn.onrender.com';
 
   //  Fetch optimized map from backend
   const fetchMap = async (parameters) => {
