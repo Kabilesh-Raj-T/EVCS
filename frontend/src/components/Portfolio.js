@@ -519,7 +519,7 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
 
       {/* Footer spacer */}
       <footer className="portfolio-footer">
-        <span className="footer-credits">T Kabilesh Raj © 2026. Handcrafted.</span>
+        <span className="footer-credits">T Kabilesh Raj © 2026.</span>
       </footer>
     </div>
   );
