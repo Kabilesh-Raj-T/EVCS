@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ControlPanel from './components/ControlPanel';
 import MapViewer from './components/MapViewer';
+import Portfolio from './components/Portfolio';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 function App() {
+  const [appState, setAppState] = useState('PORTFOLIO');
+  // states: 'PORTFOLIO', 'APP'
+  const [isReady, setIsReady] = useState(false);
   const [mapHtml, setMapHtml] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [params, setParams] = useState({
-    k: 0, // default to 0 stations for better visualization
+    k: 5,
     resolution: 100,
     lat_min: 8.0,
     lat_max: 13.5,
@@ -19,24 +23,18 @@ function App() {
     lon_max: 80.5
   });
 
-  //  Azure backend URL
   const API_BASE_URL = 'https://evcs-c5xn.onrender.com';
 
-  //  Fetch optimized map from backend
-  const fetchMap = async (parameters) => {
+  const fetchMap = async (parameters, isInitialLoad = false) => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Removed { responseType: 'text' } so axios automatically parses the JSON
       const response = await axios.post(
         `${API_BASE_URL}/optimize`,
         parameters
       );
-      
-      // 2. Updated to extract 'map_html' from the JSON object
-      // Previously this was: setMapHtml(response.data);
       setMapHtml(response.data.map_html);
-      
+      return true;
     } catch (err) {
       console.error('Error fetching map:', err);
       setError(
@@ -44,24 +42,58 @@ function App() {
           ? `Server error (${err.response.status}): ${err.response.statusText}`
           : 'Failed to connect to backend. Please try again.'
       );
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  //  Load map once on page load
+  const mayAutoOpenAppRef = useRef(true);
+
   useEffect(() => {
-    fetchMap(params);
+    let timeoutId;
+    let isMounted = true;
+
+    timeoutId = setTimeout(() => {
+      mayAutoOpenAppRef.current = false;
+    }, 1000);
+
+    const initialize = async () => {
+      const success = await fetchMap(params, true);
+
+      if (isMounted && success) {
+        setIsReady(true);
+        if (mayAutoOpenAppRef.current) {
+          setAppState('APP');
+        }
+      } else if (isMounted && !success) {
+        setAppState('APP');
+      }
+    };
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  //  Handle optimize button click
+  const handleToggle = () => {
+    if (appState === 'APP') {
+      setAppState('PORTFOLIO');
+    } else if (appState === 'PORTFOLIO') {
+      setAppState('APP');
+    }
+  };
+
   const handleOptimize = (newParams) => {
     setParams(newParams);
     fetchMap(newParams);
   };
 
-  return (
+  const mainAppContent = (
     <div className="App">
       <header className="app-header">
         <h1>Placitude</h1>
@@ -80,6 +112,49 @@ function App() {
         <MapViewer mapHtml={mapHtml} loading={loading} error={error} />
       </div>
     </div>
+  );
+
+  const isAppActive = appState === 'APP';
+  const showTab = isReady;
+
+  return (
+    <>
+      {showTab && (
+        <button 
+          className="portfolio-tab"
+          onClick={handleToggle}
+        >
+          {appState === 'APP' ? 'View Portfolio' : 'Go to EVCS'}
+        </button>
+      )}
+      
+      {appState === 'PORTFOLIO' && (
+        <div className={`backend-status ${isReady ? 'ready' : ''}`}>
+          {!isReady ? (
+            <>
+              <div className="spinner"></div>
+              Waking up backend...
+            </>
+          ) : (
+            <>
+              <div className="check-icon">✓</div>
+              Backend is online!
+            </>
+          )}
+        </div>
+      )}
+
+      <div className={`portfolio-wrapper ${isAppActive ? 'zoom-through' : ''}`}>
+        <Portfolio
+          isTransitioning={isAppActive}
+          isBackendReady={isReady}
+          onToggleApp={handleToggle}
+        />
+      </div>
+      <div className={`app-main ${!isAppActive ? 'background-depth' : ''}`}>
+        {mainAppContent}
+      </div>
+    </>
   );
 }
 

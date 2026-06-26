@@ -1,26 +1,25 @@
 import React from 'react';
-import { Card, Spinner, Alert } from 'react-bootstrap';
 import './MapViewer.css';
 
 function MapViewer({ mapHtml, loading, error }) {
   return (
-    <Card className="map-viewer">
-      <Card.Body className="map-body">
+    <div className="map-viewer">
+      <div className="map-body">
         {loading && (
           <div className="loading-container">
-            <Spinner animation="border" variant="primary" />
-            <p className="mt-3">Generating optimized station locations...</p>
+            <div className="spatial-spinner"></div>
+            <p className="loading-text">Generating optimized station locations...</p>
           </div>
         )}
         
         {error && (
-          <Alert variant="danger" className="error-alert">
-            <Alert.Heading>Error Loading Map</Alert.Heading>
-            <p>{error}</p>
-            <p className="mb-0">
-              Please ensure the Flask backend is running on port 8000.
+          <div className="error-alert">
+            <h3 className="error-title">Error Loading Map</h3>
+            <p className="error-desc">{error}</p>
+            <p className="error-hint">
+              The optimization service may be waking up. Please wait a moment and try again.
             </p>
-          </Alert>
+          </div>
         )}
         
         {!loading && !error && mapHtml && (
@@ -35,11 +34,11 @@ function MapViewer({ mapHtml, loading, error }) {
         
         {!loading && !error && !mapHtml && (
           <div className="loading-container">
-            <p>Initializing map...</p>
+            <p className="loading-text">Initializing map canvas...</p>
           </div>
         )}
-      </Card.Body>
-    </Card>
+      </div>
+    </div>
   );
 }
 

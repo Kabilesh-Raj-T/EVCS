@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Form, Button, Card } from 'react-bootstrap';
 import './ControlPanel.css';
 
 function ControlPanel({ params, onOptimize, loading }) {
@@ -32,113 +31,116 @@ function ControlPanel({ params, onOptimize, loading }) {
   };
 
   return (
-    <Card className="control-panel glass-card">
-      <Card.Body>
-        <Card.Title className="panel-title">Station Optimization</Card.Title>
-        <p className="panel-subtitle">
-          Adjust parameters and explore optimized EV station placement.
-        </p>
+    <div className="control-panel">
+      <h2 className="panel-title">Station Optimization</h2>
+      <p className="panel-subtitle">
+        Adjust parameters and explore optimized EV station placement.
+      </p>
 
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Number of New Stations</Form.Label>
-            <Form.Control
+      <form onSubmit={handleSubmit}>
+        <div className="form-group mb-4">
+          <label className="form-label">Number of New Stations</label>
+          <input
+            type="number"
+            name="k"
+            className="form-control"
+            value={formData.k}
+            onChange={handleChange}
+            min="1"
+            max="150"
+            required
+          />
+        </div>
+
+        <div className="form-group mb-4">
+          <label className="form-label">Grid Resolution</label>
+          <input
+            type="number"
+            name="resolution"
+            className="form-control"
+            value={formData.resolution}
+            onChange={handleChange}
+            min="10"
+            max="500"
+            required
+          />
+          <span className="text-hint">
+            Higher resolution = finer accuracy (but slower)
+          </span>
+        </div>
+
+        <h3 className="section-title">Geographic Bounds</h3>
+
+        <div className="grid-inputs">
+          <div className="form-group">
+            <label className="form-label">Latitude Min</label>
+            <input
               type="number"
-              name="k"
-              value={formData.k}
+              name="lat_min"
+              className="form-control"
+              value={formData.lat_min}
               onChange={handleChange}
-              min="1"
-              max="150"
+              step="0.1"
               required
             />
-          </Form.Group>
-
-          <Form.Group className="mb-4">
-            <Form.Label>Grid Resolution</Form.Label>
-            <Form.Control
+          </div>
+          <div className="form-group">
+            <label className="form-label">Latitude Max</label>
+            <input
               type="number"
-              name="resolution"
-              value={formData.resolution}
+              name="lat_max"
+              className="form-control"
+              value={formData.lat_max}
               onChange={handleChange}
-              min="10"
-              max="500"
+              step="0.1"
               required
             />
-            <Form.Text className="text-hint">
-              Higher resolution = finer accuracy (but slower)
-            </Form.Text>
-          </Form.Group>
-
-          <h6 className="section-title">Geographic Bounds</h6>
-
-          <div className="grid-inputs">
-            <Form.Group>
-              <Form.Label>Latitude Minimum</Form.Label>
-              <Form.Control
-                type="number"
-                name="lat_min"
-                value={formData.lat_min}
-                onChange={handleChange}
-                step="0.1"
-                required
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Latitude Maximum</Form.Label>
-              <Form.Control
-                type="number"
-                name="lat_max"
-                value={formData.lat_max}
-                onChange={handleChange}
-                step="0.1"
-                required
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Longitude Minimum</Form.Label>
-              <Form.Control
-                type="number"
-                name="lon_min"
-                value={formData.lon_min}
-                onChange={handleChange}
-                step="0.1"
-                required
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Longitude Maximum</Form.Label>
-              <Form.Control
-                type="number"
-                name="lon_max"
-                value={formData.lon_max}
-                onChange={handleChange}
-                step="0.1"
-                required
-              />
-            </Form.Group>
           </div>
-
-          <div className="button-group">
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={loading}
-              className="w-100 mb-2 action-btn"
-            >
-              {loading ? 'Optimizing...' : '🔍 Run Optimization'}
-            </Button>
-            <Button
-              variant="outline-light"
-              onClick={handleReset}
-              disabled={loading}
-              className="w-100 reset-btn"
-            >
-              Reset Defaults
-            </Button>
+          <div className="form-group">
+            <label className="form-label">Longitude Min</label>
+            <input
+              type="number"
+              name="lon_min"
+              className="form-control"
+              value={formData.lon_min}
+              onChange={handleChange}
+              step="0.1"
+              required
+            />
           </div>
-        </Form>
-      </Card.Body>
-    </Card>
+          <div className="form-group">
+            <label className="form-label">Longitude Max</label>
+            <input
+              type="number"
+              name="lon_max"
+              className="form-control"
+              value={formData.lon_max}
+              onChange={handleChange}
+              step="0.1"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="button-group">
+          <button
+            type="submit"
+            disabled={loading}
+            className="action-btn"
+          >
+            {loading ? 'Optimizing...' : 'Optimize'}
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={loading}
+            className="reset-btn"
+          >
+            Reset
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
