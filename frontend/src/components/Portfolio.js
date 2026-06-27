@@ -387,12 +387,6 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
             <div className="section-label no-border">
               02 / Technical Skills
             </div>
-            <h2 className="skills-main-heading">
-              {splitWords("Crafting digital experiences with a structured engineering stack.")}
-            </h2>
-            <p className="skills-sub-copy">
-              A blend of systems architecture, data optimization, and responsive interface design.
-            </p>
           </div>
           
           <div className="skills-card-deck">
@@ -450,7 +444,7 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
         <div className="timeline-layout">
           <div className="timeline-intro">
             <h2 className="timeline-title">
-              {splitWords("Honors & Contributions")}
+              {splitWords("Accomplishments")}
             </h2>
             <p className="timeline-desc">
               Academic recognition, developer milestones, and community leadership.
@@ -477,7 +471,7 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
                 <span className="timeline-heading">Runner-Up at Futurize Fiesta</span>
               </div>
               <p className="timeline-body-text">
-                Ranked 2nd in the inter-college technical competition, presenting data systems integration and hardware-software optimization strategies.
+                Secured Runner-Up in "Futurize Fiesta," an inter-college technical competition.
               </p>
             </div>
 
@@ -499,7 +493,7 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
                 <span className="timeline-heading">Symposium Organizer — ElectroFocus'25</span>
               </div>
               <p className="timeline-body-text">
-                Led technical event organization, managing planning, logistics, and spatial setup for 100+ participating students.
+                Organized a university tech symposium event for 100+ attendees (ElectroFocus'25)
               </p>
             </div>
 
