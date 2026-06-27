@@ -94,12 +94,11 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
 
     // 3. Bullet line highlighting observer (scroll-driven copy highlighting)
     const bulletObserver = new IntersectionObserver(
-      (entries) => {
+      (entries, observer) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('bullet-active');
-          } else {
-            entry.target.classList.remove('bullet-active');
+            observer.unobserve(entry.target);
           }
         });
       },
