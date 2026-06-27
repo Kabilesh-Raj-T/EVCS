@@ -113,37 +113,74 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
 
     // Scroll & Resize handler for ambient bg translation and skills circular scrollytelling
     let ticked = false;
+    const getScrollRoot = () => document.querySelector('.portfolio-wrapper');
+
+    const getElementTopWithinScroller = (element, scroller) => {
+      const elementRect = element.getBoundingClientRect();
+      const scrollerRect = scroller.getBoundingClientRect();
+      return elementRect.top - scrollerRect.top + scroller.scrollTop;
+    };
+
     const handleScroll = () => {
       if (!ticked) {
         window.requestAnimationFrame(() => {
-          const scrollTop = window.scrollY || document.documentElement.scrollTop;
-          const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const scrollRoot = getScrollRoot();
+          const scrollTop = scrollRoot
+            ? scrollRoot.scrollTop
+            : window.scrollY || document.documentElement.scrollTop;
+          const scrollHeight = scrollRoot
+            ? scrollRoot.scrollHeight - scrollRoot.clientHeight
+            : document.documentElement.scrollHeight - window.innerHeight;
           const ratio = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
           document.documentElement.style.setProperty('--scroll-ratio', ratio.toFixed(4));
           
-          // Calculate skills circular scrollytelling progress
           const skillsContainer = document.querySelector('.skills-scroll-container');
-          if (skillsContainer) {
-            const rect = skillsContainer.getBoundingClientRect();
-            const containerHeight = rect.height;
-            const scrolled = -rect.top;
-            const scrollRange = containerHeight - window.innerHeight;
+          if (skillsContainer && scrollRoot) {
+            const containerTop = getElementTopWithinScroller(skillsContainer, scrollRoot);
+            const containerHeight = skillsContainer.offsetHeight;
+            const viewportHeight = scrollRoot.clientHeight;
+            const scrolled = scrollRoot.scrollTop - containerTop;
+            const scrollRange = containerHeight - viewportHeight;
             let progress = 0;
-            if (scrolled > 0 && scrollRange > 0) {
+            if (scrollRange > 0) {
               progress = Math.min(Math.max(scrolled / scrollRange, 0), 1);
             }
-            document.documentElement.style.setProperty('--skills-scroll-progress', progress.toFixed(4));
             
-            // Calculate individual card angle and distance from center
+            // Highlight the active card based on scroll progress
             const cards = skillsContainer.querySelectorAll('.skills-card');
+            let activeIndex = 0;
+            if (progress < 0.25) {
+              activeIndex = 0;
+            } else if (progress < 0.75) {
+              activeIndex = 1;
+            } else {
+              activeIndex = 2;
+            }
+            
             cards.forEach((card, index) => {
               const targetProgress = index * 0.5;
-              const diff = targetProgress - progress; // inverted sign: cards enter from right, exit left
+              const diff = targetProgress - progress; // cards sweep right-to-left
               const angle = diff * 55; // 55deg sweep
+              const angleInv = -angle;
               const dist = Math.min(Math.abs(diff) * 2.5, 2);
               
-              card.style.setProperty('--card-angle', `${angle.toFixed(2)}deg`);
-              card.style.setProperty('--card-dist', dist.toFixed(4));
+              // Calculate scale, opacity, and blur values directly in JS
+              const scale = Math.max(0.7, 1 - dist * 0.1);
+              const opacity = Math.max(0, 1 - dist * 0.55);
+              const blurVal = dist * 1.5;
+              
+              card.style.setProperty('--card-angle', `${angle.toFixed(4)}deg`);
+              card.style.setProperty('--card-angle-inv', `${angleInv.toFixed(4)}deg`);
+              card.style.setProperty('--card-scale', scale.toFixed(4));
+              card.style.setProperty('--card-opacity', opacity.toFixed(4));
+              card.style.setProperty('--card-blur', `${blurVal.toFixed(4)}px`);
+              card.style.zIndex = String(Math.round(10 - dist * 5));
+              
+              if (index === activeIndex) {
+                card.classList.add('card-active');
+              } else {
+                card.classList.remove('card-active');
+              }
             });
           }
           ticked = false;
@@ -152,18 +189,24 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    const scrollRoot = getScrollRoot();
+    if (scrollRoot) {
+      scrollRoot.addEventListener('scroll', handleScroll, { passive: true });
+    }
     window.addEventListener('resize', handleScroll, { passive: true });
     window.addEventListener('hashchange', revealElementsInView);
     handleScroll();
     revealElementsInView();
+    requestAnimationFrame(handleScroll);
     requestAnimationFrame(revealElementsInView);
 
     return () => {
       revealObserver.disconnect();
       projectObserver.disconnect();
       bulletObserver.disconnect();
-      window.removeEventListener('scroll', handleScroll);
+      if (scrollRoot) {
+        scrollRoot.removeEventListener('scroll', handleScroll);
+      }
       window.removeEventListener('resize', handleScroll);
       window.removeEventListener('hashchange', revealElementsInView);
     };
@@ -348,7 +391,7 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
                 <span>OOP</span>
                 <span>Query Tuning</span>
               </div>
-              <a href="https://github.com/Kabilesh-Raj-T/EVCS" target="_blank" rel="noreferrer" className="project-link">
+              <a href="https://github.com/Kabilesh-Raj-T/SMS" target="_blank" rel="noreferrer" className="project-link">
                 View Repository ↗
               </a>
             </div>

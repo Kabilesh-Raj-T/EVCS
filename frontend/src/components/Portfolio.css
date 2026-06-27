@@ -612,6 +612,7 @@
   height: 220vh; /* scroll range to drive the rotation */
   width: 100%;
   border-top: 1px solid var(--border-subtle);
+  opacity: 1;
 }
 
 .skills-sticky-wrapper {
@@ -622,7 +623,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible; /* Show the rotated cards outside sticky box */
 }
 
 .skills-section-content {
@@ -676,7 +677,8 @@
   margin-top: -190px;
   margin-left: -180px;
   will-change: transform, opacity, filter;
-  transition: border-color 400ms ease, box-shadow 400ms ease;
+  transition: border-color 400ms ease, box-shadow 400ms ease, background-color 400ms ease;
+  border-top: 2px solid rgba(167, 139, 250, 0.2) !important;
 }
 
 /* Circular Orbit rotation sweep on Desktop */
@@ -685,16 +687,33 @@
     transform: 
       rotate(var(--card-angle, 0deg))
       translateY(-12vh) /* Radius of the orbit */
-      rotate(calc(-1 * var(--card-angle, 0deg)))
-      scale(calc(1 - var(--card-dist, 0) * 0.1));
-    opacity: calc(1 - var(--card-dist, 0) * 0.55);
-    filter: blur(calc(var(--card-dist, 0) * 1.5px));
+      rotate(var(--card-angle-inv, 0deg))
+      scale(var(--card-scale, 1));
+    opacity: var(--card-opacity, 1);
+    filter: blur(var(--card-blur, 0px));
   }
 }
 
-/* Luxury card glows and highlights (Unified Accent Color) */
-.skills-card {
+/* Highlight active centered card */
+.skills-card.card-active {
+  border-color: var(--accent-color) !important;
   border-top: 2px solid var(--accent-color) !important;
+  box-shadow: 0 20px 40px rgba(167, 139, 250, 0.15),
+              0 0 30px rgba(167, 139, 250, 0.08);
+}
+
+/* spring lift on active hover */
+@media (prefers-reduced-motion: no-preference) {
+  .skills-card.card-active:hover {
+    background-color: #161616;
+    transform: 
+      rotate(var(--card-angle, 0deg))
+      translateY(calc(-12vh - 18px)) /* spring lift */
+      rotate(var(--card-angle-inv, 0deg))
+      scale(calc(var(--card-scale, 1) * 1.04)) !important;
+    box-shadow: 0 25px 50px rgba(167, 139, 250, 0.2),
+                0 0 35px rgba(167, 139, 250, 0.1);
+  }
 }
 
 .card-header {
@@ -725,6 +744,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 1.5rem;
 }
 
 .skills-chips span {
@@ -765,26 +785,6 @@
 
 /* Gen-Z springy bounce animations on Hover */
 @media (prefers-reduced-motion: no-preference) {
-  .skills-card {
-    transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1),
-                border-color 400ms ease,
-                box-shadow 400ms ease,
-                background-color 400ms ease;
-  }
-  
-  .skills-card:hover {
-    background-color: #161616;
-    border-color: var(--accent-color) !important;
-    box-shadow: 0 20px 40px rgba(167, 139, 250, 0.12),
-                0 0 35px rgba(167, 139, 250, 0.08);
-    transform: 
-      rotate(var(--card-angle, 0deg))
-      translateY(calc(-12vh - 18px)) /* spring lift */
-      rotate(calc(-1 * var(--card-angle, 0deg)))
-      scale(calc(1.04 - var(--card-dist, 0) * 0.1)) !important;
-    z-index: 50;
-  }
-  
   .skills-chips span {
     transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
                 border-color 400ms ease,
