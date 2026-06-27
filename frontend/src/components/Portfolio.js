@@ -112,7 +112,7 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
     const bullets = document.querySelectorAll('.project-bullets li');
     bullets.forEach((bullet) => bulletObserver.observe(bullet));
 
-    // Scroll & Resize handler for ambient bg translation and timeline connector
+    // Scroll & Resize handler for ambient bg translation and skills circular scrollytelling
     let ticked = false;
     const handleScroll = () => {
       if (!ticked) {
@@ -122,52 +122,29 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
           const ratio = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
           document.documentElement.style.setProperty('--scroll-ratio', ratio.toFixed(4));
           
-          // Calculate timeline progress
-          const timelineList = document.querySelector('.timeline-list');
-          if (timelineList) {
-            const rect = timelineList.getBoundingClientRect();
-            const timelineHeight = rect.height;
-            const viewportCenter = window.innerHeight * 0.6;
-            const timelineStart = rect.top;
-            
+          // Calculate skills circular scrollytelling progress
+          const skillsContainer = document.querySelector('.skills-scroll-container');
+          if (skillsContainer) {
+            const rect = skillsContainer.getBoundingClientRect();
+            const containerHeight = rect.height;
+            const scrolled = -rect.top;
+            const scrollRange = containerHeight - window.innerHeight;
             let progress = 0;
-            if (timelineStart < viewportCenter) {
-              const scrolledAmount = viewportCenter - timelineStart;
-              progress = Math.min(Math.max(scrolledAmount / timelineHeight, 0), 1);
+            if (scrolled > 0 && scrollRange > 0) {
+              progress = Math.min(Math.max(scrolled / scrollRange, 0), 1);
             }
-            document.documentElement.style.setProperty('--timeline-progress', `${(progress * 100).toFixed(2)}%`);
+            document.documentElement.style.setProperty('--skills-scroll-progress', progress.toFixed(4));
             
-            const items = timelineList.querySelectorAll('.timeline-item');
-            items.forEach((item) => {
-              const itemRect = item.getBoundingClientRect();
-              if (itemRect.top < viewportCenter) {
-                item.classList.add('timeline-active');
-              } else {
-                item.classList.remove('timeline-active');
-              }
-            });
-          }
-
-          // Calculate card stack progress
-          const cards = document.querySelectorAll('.skills-card');
-          if (cards.length > 0) {
-            const stickyTrigger = window.innerHeight * 0.15;
+            // Calculate individual card angle and distance from center
+            const cards = skillsContainer.querySelectorAll('.skills-card');
             cards.forEach((card, index) => {
-              const nextCard = cards[index + 1];
-              if (nextCard) {
-                const nextRect = nextCard.getBoundingClientRect();
-                const currentStickyTop = stickyTrigger + index * 25;
-                const distance = currentStickyTop - nextRect.top;
-                const overlapRange = 200; // Smooth transition over 200px of scroll
-                
-                let progress = 0;
-                if (distance > 0) {
-                  progress = Math.min(distance / overlapRange, 1);
-                }
-                card.style.setProperty('--card-progress', progress.toFixed(4));
-              } else {
-                card.style.setProperty('--card-progress', '0');
-              }
+              const targetProgress = index * 0.5;
+              const diff = progress - targetProgress;
+              const angle = diff * 70;
+              const dist = Math.min(Math.abs(diff) * 2, 2);
+              
+              card.style.setProperty('--card-angle', `${angle.toFixed(2)}deg`);
+              card.style.setProperty('--card-dist', dist.toFixed(4));
             });
           }
           ticked = false;
@@ -380,62 +357,64 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
         </div>
       </section>
 
-      {/* Skills Section - Card Stack Scrollytelling */}
-      <section className="portfolio-section" ref={addToRefs}>
-        <div className="skills-stack-layout">
-          <div className="skills-intro-sticky">
-            <div className="section-label no-border">
-              02 / Technical Skills
-            </div>
-          </div>
-          
-          <div className="skills-card-deck">
-            <div className="skills-card card-1" style={{ "--card-index": 0 }}>
-              <div className="card-header">
-                <span className="card-num">01.</span>
-                <h3>Languages</h3>
-              </div>
-              <div className="skills-chips">
-                <span>Python</span>
-                <span>C++</span>
-                <span>JavaScript</span>
-                <span>Verilog</span>
+      {/* Skills Section - Circular Scrollytelling Carousel */}
+      <div className="skills-scroll-container" ref={addToRefs}>
+        <div className="skills-sticky-wrapper">
+          <div className="skills-stack-layout">
+            <div className="skills-intro-sticky">
+              <div className="section-label no-border">
+                02 / Technical Skills
               </div>
             </div>
             
-            <div className="skills-card card-2" style={{ "--card-index": 1 }}>
-              <div className="card-header">
-                <span className="card-num">02.</span>
-                <h3>Frameworks</h3>
+            <div className="skills-card-deck">
+              <div className="skills-card card-1" style={{ "--card-index": 0 }}>
+                <div className="card-header">
+                  <span className="card-num">01.</span>
+                  <h3>Languages</h3>
+                </div>
+                <div className="skills-chips">
+                  <span>Python</span>
+                  <span>C++</span>
+                  <span>JavaScript</span>
+                  <span>Verilog</span>
+                </div>
               </div>
-              <div className="skills-chips">
-                <span>Flask</span>
-                <span>React</span>
-                <span>Pandas</span>
-                <span>NumPy</span>
-                <span>Scikit-Learn</span>
-                <span>GeoPandas</span>
+              
+              <div className="skills-card card-2" style={{ "--card-index": 1 }}>
+                <div className="card-header">
+                  <span className="card-num">02.</span>
+                  <h3>Frameworks</h3>
+                </div>
+                <div className="skills-chips">
+                  <span>Flask</span>
+                  <span>React</span>
+                  <span>Pandas</span>
+                  <span>NumPy</span>
+                  <span>Scikit-Learn</span>
+                  <span>GeoPandas</span>
+                </div>
               </div>
-            </div>
-            
-            <div className="skills-card card-3" style={{ "--card-index": 2 }}>
-              <div className="card-header">
-                <span className="card-num">03.</span>
-                <h3>Tools & Platforms</h3>
-              </div>
-              <div className="skills-chips">
-                <span>MySQL</span>
-                <span>Docker</span>
-                <span>Azure Cloud</span>
-                <span>Git</span>
-                <span>GitHub Actions</span>
-                <span>Vivado / Vivado HLS</span>
-                <span>MATLAB</span>
+              
+              <div className="skills-card card-3" style={{ "--card-index": 2 }}>
+                <div className="card-header">
+                  <span className="card-num">03.</span>
+                  <h3>Tools & Platforms</h3>
+                </div>
+                <div className="skills-chips">
+                  <span>MySQL</span>
+                  <span>Docker</span>
+                  <span>Azure Cloud</span>
+                  <span>Git</span>
+                  <span>GitHub Actions</span>
+                  <span>Vivado / Vivado HLS</span>
+                  <span>MATLAB</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Accomplishments Section */}
       <section className="portfolio-section" ref={addToRefs}>
