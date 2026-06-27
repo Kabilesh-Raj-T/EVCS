@@ -611,6 +611,7 @@
   position: relative;
   height: 220vh; /* scroll range to drive the rotation */
   width: 100%;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .skills-sticky-wrapper {
@@ -620,29 +621,37 @@
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
-.skills-stack-layout {
-  display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
-  gap: 6rem;
+.skills-section-content {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
-  width: 100%;
-  position: relative;
-  align-items: center;
+  padding: 6rem 2rem 0 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
 }
 
-.skills-intro-sticky {
+.skills-stack-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 4rem; /* gap below section label */
   position: relative;
-  height: fit-content;
+  flex-grow: 1;
+  justify-content: center;
 }
 
 .skills-card-deck {
   position: relative;
   width: 100%;
+  max-width: 600px;
   height: 480px;
   display: flex;
   align-items: center;
@@ -798,13 +807,13 @@
     height: auto !important;
     overflow: visible !important;
   }
-  .skills-stack-layout {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-    padding: 4rem 1.5rem;
+  .skills-section-content {
+    padding: 4rem 1.5rem !important;
+    height: auto !important;
   }
-  .skills-intro-sticky {
-    position: relative !important;
+  .skills-stack-layout {
+    margin-top: 2rem !important;
+    height: auto !important;
   }
   .skills-card-deck {
     flex-direction: column !important;
@@ -836,13 +845,13 @@
     height: auto !important;
     overflow: visible !important;
   }
-  .skills-stack-layout {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-    padding: 4rem 1.5rem;
+  .skills-section-content {
+    padding: 4rem 1.5rem !important;
+    height: auto !important;
   }
-  .skills-intro-sticky {
-    position: relative !important;
+  .skills-stack-layout {
+    margin-top: 2rem !important;
+    height: auto !important;
   }
   .skills-card-deck {
     flex-direction: column !important;

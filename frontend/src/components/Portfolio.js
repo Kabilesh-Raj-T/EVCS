@@ -138,9 +138,9 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
             const cards = skillsContainer.querySelectorAll('.skills-card');
             cards.forEach((card, index) => {
               const targetProgress = index * 0.5;
-              const diff = progress - targetProgress;
-              const angle = diff * 70;
-              const dist = Math.min(Math.abs(diff) * 2, 2);
+              const diff = targetProgress - progress; // inverted sign: cards enter from right, exit left
+              const angle = diff * 55; // 55deg sweep
+              const dist = Math.min(Math.abs(diff) * 2.5, 2);
               
               card.style.setProperty('--card-angle', `${angle.toFixed(2)}deg`);
               card.style.setProperty('--card-dist', dist.toFixed(4));
@@ -359,55 +359,53 @@ const Portfolio = ({ isTransitioning, isBackendReady, onToggleApp }) => {
       {/* Skills Section - Circular Scrollytelling Carousel */}
       <div className="skills-scroll-container" ref={addToRefs}>
         <div className="skills-sticky-wrapper">
-          <div className="skills-stack-layout">
-            <div className="skills-intro-sticky">
-              <div className="section-label no-border">
-                02 / Technical Skills
-              </div>
-            </div>
+          <div className="skills-section-content">
+            <div className="section-label">02 / Technical Skills</div>
             
-            <div className="skills-card-deck">
-              <div className="skills-card card-1" style={{ "--card-index": 0 }}>
-                <div className="card-header">
-                  <span className="card-num">01.</span>
-                  <h3>Languages</h3>
+            <div className="skills-stack-layout">
+              <div className="skills-card-deck">
+                <div className="skills-card card-1" style={{ "--card-index": 0 }}>
+                  <div className="card-header">
+                    <span className="card-num">01.</span>
+                    <h3>Languages</h3>
+                  </div>
+                  <div className="skills-chips">
+                    <span>Python</span>
+                    <span>C++</span>
+                    <span>JavaScript</span>
+                    <span>Verilog</span>
+                  </div>
                 </div>
-                <div className="skills-chips">
-                  <span>Python</span>
-                  <span>C++</span>
-                  <span>JavaScript</span>
-                  <span>Verilog</span>
+                
+                <div className="skills-card card-2" style={{ "--card-index": 1 }}>
+                  <div className="card-header">
+                    <span className="card-num">02.</span>
+                    <h3>Frameworks</h3>
+                  </div>
+                  <div className="skills-chips">
+                    <span>Flask</span>
+                    <span>React</span>
+                    <span>Pandas</span>
+                    <span>NumPy</span>
+                    <span>Scikit-Learn</span>
+                    <span>GeoPandas</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="skills-card card-2" style={{ "--card-index": 1 }}>
-                <div className="card-header">
-                  <span className="card-num">02.</span>
-                  <h3>Frameworks</h3>
-                </div>
-                <div className="skills-chips">
-                  <span>Flask</span>
-                  <span>React</span>
-                  <span>Pandas</span>
-                  <span>NumPy</span>
-                  <span>Scikit-Learn</span>
-                  <span>GeoPandas</span>
-                </div>
-              </div>
-              
-              <div className="skills-card card-3" style={{ "--card-index": 2 }}>
-                <div className="card-header">
-                  <span className="card-num">03.</span>
-                  <h3>Tools & Platforms</h3>
-                </div>
-                <div className="skills-chips">
-                  <span>MySQL</span>
-                  <span>Docker</span>
-                  <span>Azure Cloud</span>
-                  <span>Git</span>
-                  <span>GitHub Actions</span>
-                  <span>Vivado / Vivado HLS</span>
-                  <span>MATLAB</span>
+                
+                <div className="skills-card card-3" style={{ "--card-index": 2 }}>
+                  <div className="card-header">
+                    <span className="card-num">03.</span>
+                    <h3>Tools & Platforms</h3>
+                  </div>
+                  <div className="skills-chips">
+                    <span>MySQL</span>
+                    <span>Docker</span>
+                    <span>Azure Cloud</span>
+                    <span>Git</span>
+                    <span>GitHub Actions</span>
+                    <span>Vivado / Vivado HLS</span>
+                    <span>MATLAB</span>
+                  </div>
                 </div>
               </div>
             </div>
