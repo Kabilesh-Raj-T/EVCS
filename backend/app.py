@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import pandas as pd
@@ -667,16 +667,6 @@ def load_data():
     REGION_OPTIONS = serialize_regions(state_regions)
     logger.info("Loaded %d India charging station rows", len(existing_coords))
 
-    # Generate base heatmap once
-    base_map = folium.Map(location=INDIA_CENTER, zoom_start=5)
-    folium.GeoJson(india_boundary, name="India").add_to(base_map)
-
-    add_station_heatmap(base_map, existing_coords)
-
-    BASE_MAP_PATH = os.path.join(tempfile.gettempdir(), "existing_india_heatmap.html")
-    base_map.save(BASE_MAP_PATH)
-    logger.info("Base India station heatmap saved at %s", BASE_MAP_PATH)
-
     data_loaded = True
 
 def region_center(bounds):
@@ -796,16 +786,22 @@ def add_region_boundary(map_obj, region):
 # ----------------------------
 # Routes
 # ----------------------------
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "service": "EVCS backend",
+        "data_loaded": data_loaded,
+    })
+
 @app.route("/", methods=["GET"])
 def base():
-    try:
-        load_data()
-        if BASE_MAP_PATH and os.path.exists(BASE_MAP_PATH):
-            return send_file(BASE_MAP_PATH, mimetype="text/html")
-        return "<html><body><h3>Station map not available</h3></body></html>", 503
-    except Exception as e:
-        logger.exception("Error serving base station map")
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "status": "ok",
+        "service": "EVCS backend",
+        "endpoints": ["/health", "/regions", "/optimize"],
+        "data_loaded": data_loaded,
+    })
 
 @app.route("/regions", methods=["GET"])
 def regions():
