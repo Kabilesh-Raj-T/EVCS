@@ -32,3 +32,12 @@ frontend/node_modules/
 build/
 
 .vercel
+
+# Local cleanup quarantine
+trash_cleanup/
+datasets/
+
+# Large/generated geospatial rebuild artifacts
+backend/data/cache/
+backend/data/raw/osm_*.csv
+backend/data/raw/geofabrik_*.osm.pbf

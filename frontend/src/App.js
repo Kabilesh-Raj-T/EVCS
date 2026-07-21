@@ -6,6 +6,20 @@ import Portfolio from './components/Portfolio';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
+const DEFAULT_PARAMS = {
+  region_type: 'all_india',
+  region_name: '',
+  district: '',
+  optimizer: 'greedy',
+  k: 0,
+  resolution: 120
+};
+
+const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL ||
+  (isLocalHost ? 'http://127.0.0.1:8000' : 'https://evcs-c5xn.onrender.com');
+
 function App() {
   const [appState, setAppState] = useState('PORTFOLIO');
   // states: 'PORTFOLIO', 'APP'
@@ -13,17 +27,22 @@ function App() {
   const [mapHtml, setMapHtml] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [regions, setRegions] = useState({ default_bounds: null, states: [] });
+  const [regionsLoading, setRegionsLoading] = useState(false);
 
-  const [params, setParams] = useState({
-    k: 0,
-    resolution: 100,
-    lat_min: 8.0,
-    lat_max: 13.5,
-    lon_min: 76.0,
-    lon_max: 80.5
-  });
+  const [params, setParams] = useState(DEFAULT_PARAMS);
 
-  const API_BASE_URL = 'https://evcs-c5xn.onrender.com';
+  const fetchRegions = async () => {
+    setRegionsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/regions`);
+      setRegions(response.data);
+    } catch (err) {
+      console.error('Error fetching regions:', err);
+    } finally {
+      setRegionsLoading(false);
+    }
+  };
 
   const fetchMap = async (parameters, isInitialLoad = false) => {
     setLoading(true);
@@ -59,6 +78,7 @@ function App() {
     }, 1000);
 
     const initialize = async () => {
+      await fetchRegions();
       const success = await fetchMap(params, true);
 
       if (isMounted && success) {
@@ -106,6 +126,9 @@ function App() {
       <div className="app-container">
         <ControlPanel
           params={params}
+          defaultParams={DEFAULT_PARAMS}
+          regions={regions}
+          regionsLoading={regionsLoading}
           onOptimize={handleOptimize}
           loading={loading}
         />

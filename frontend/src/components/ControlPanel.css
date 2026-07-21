@@ -10,7 +10,8 @@
   font-family: var(--font-editorial);
   width: 420px;
   height: 100%;
-  overflow-y: hidden; /* Prevent vertical scroll on desktop */
+  overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
   transition: border-color var(--transition-fast);
 }
@@ -60,7 +61,8 @@
   margin-bottom: 0.55rem; /* Tightened spacing */
 }
 
-.control-panel .form-control {
+.control-panel .form-control,
+.control-panel .form-select {
   width: 100%;
   background: #090909 !important;
   border: 1px solid var(--border-subtle) !important;
@@ -75,7 +77,8 @@
   box-shadow: none !important;
 }
 
-.control-panel .form-control:focus {
+.control-panel .form-control:focus,
+.control-panel .form-select:focus {
   background: #0d0d0d !important;
   border-color: var(--accent-color) !important;
   box-shadow: none !important;
