@@ -174,4 +174,13 @@
 
 .timeline-item:hover .timeline-body-text {
   color: var(--text-primary);
-}
+}
+@media (max-width: 900px) {
+  .timeline-layout {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .timeline-intro {
+    position: static;
+  }
+}
