@@ -23,7 +23,7 @@
   color: var(--text-primary);
   margin: 0;
   font-size: 2.2rem; /* Slightly smaller for dashboard context */
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: -0.04em;
 }
 
@@ -48,21 +48,21 @@
 }
 
 @media (max-width: 1200px) {
-  .app-container {
-    flex-direction: column;
-    overflow-y: auto;
+  .app-main {
+    height: 100vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
-}
-
-@media (max-width: 900px) {
   .App {
     height: auto;
-    overflow: auto;
+    min-height: 100vh;
+    overflow-y: visible;
   }
   .app-container {
-    overflow: visible;
+    flex-direction: column;
     height: auto;
     min-height: auto;
+    overflow: visible;
   }
 }
 
@@ -80,7 +80,10 @@
   z-index: 1500;
   /* Hardware-accelerated circular wipe centered exactly on the toggler tab */
   clip-path: circle(150% at calc(100% - 64px) 44px);
-  transition: clip-path 1.2s cubic-bezier(0.85, 0, 0.15, 1);
+  transition: clip-path 1.2s cubic-bezier(0.85, 0, 0.15, 1),
+              transform 1.2s cubic-bezier(0.85, 0, 0.15, 1),
+              filter 1.2s cubic-bezier(0.85, 0, 0.15, 1);
+  will-change: clip-path, transform, filter; /* Promote to compositor for smoother animation */
   pointer-events: auto;
 }
 
@@ -94,8 +97,8 @@
   top: 24px;
   right: 24px;
   z-index: 2000;
-  background: var(--surface-color);
-  color: var(--text-primary);
+  background: #ffffff; /* solid white background for readability */
+  color: #000000; /* solid black text */
   border: 1px solid var(--border-subtle);
   padding: 10px 20px;
   border-radius: 4px; /* Editorial square border */
@@ -103,7 +106,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   font-family: var(--font-editorial);
-  font-weight: 500;
+  font-weight: 600; /* bolder weight for crisp readability */
   font-size: 0.85rem;
   letter-spacing: -0.01em;
   transition: all var(--transition-fast);
@@ -111,16 +114,16 @@
 
 .portfolio-tab:hover {
   border-color: var(--accent-color);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.85); /* light hover overlay */
 }
 
 .app-main {
-  min-height: 100vh;
-  background: var(--bg-color);
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-color);
   z-index: 500;
   transform-origin: center;
   transform: scale(1) translateY(0);
@@ -128,7 +131,8 @@
   opacity: 1;
   transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1), 
               filter 1.2s cubic-bezier(0.85, 0, 0.15, 1),
-              opacity 1.2s ease;
+              opacity 1.2s cubic-bezier(0.85, 0, 0.15, 1);
+  overflow: hidden;
 }
 
 .app-main.background-depth {
@@ -136,55 +140,6 @@
   transform: scale(0.96) translateY(12px); /* Elegant slide-back depth */
   filter: blur(4px); /* Smooth low-overhead blur */
   opacity: 0.5;
-}
-
-/* Global Backend Status */
-.backend-status {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: rgba(23, 23, 23, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  padding: 8px 16px;
-  border-radius: 4px; /* Consistent editorial styling */
-  font-family: var(--font-editorial);
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 2000;
-  transition: all var(--transition-normal);
-}
-
-.backend-status.ready {
-  color: var(--text-primary);
-  border-color: rgba(167, 139, 250, 0.2); /* Lavender glow highlight border */
-}
-
-.backend-status.ready .check-icon {
-  color: var(--accent-color);
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--accent-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.check-icon {
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .app-main.fade-in-fast {
@@ -202,4 +157,12 @@
   align-items: center;
   height: 100vh;
   background: var(--bg-color);
+}
+
+/* ── Cinematic Wormhole Transition Overlay ─────────────────── */
+/* Viewport Camera Zoom & Radial Blur during transition */
+body.page-transition-active .portfolio-wrapper,
+body.page-transition-active .app-main {
+  filter: blur(8px) brightness(1.15) contrast(1.1) !important;
+  transform: scale(1.06) !important;
 }

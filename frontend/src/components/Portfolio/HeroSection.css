@@ -1,0 +1,353 @@
+/* Hero Section */
+.portfolio-hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem 0 4rem 0; /* remove horizontal padding from full-width container */
+  width: 100%;
+  max-width: 100%; /* span full viewport width */
+  position: relative;
+  overflow: hidden; /* clips the moon relative to screen boundaries */
+}
+
+/* Filmic Grain Noise Overlay */
+.portfolio-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04; /* extremely subtle gritty grain texture */
+  pointer-events: none;
+  z-index: 2; /* sits above backgrounds, below main text */
+}
+
+/* ── Rotating 3D Moon Graphic ───────────────────────────────── */
+/* ── Spaceship Cockpit Viewport (Hero Inside View) ────────────────── */
+/* ── Rotating 3D Moon Graphic ───────────────────────────────── */
+.hero-moon-wrapper {
+  position: absolute;
+  right: var(--moon-right-offset);
+  top: var(--moon-top-offset);
+  width: var(--moon-size);
+  height: var(--moon-size);
+  z-index: 1; /* sits behind the hero text layout (z-index 10) */
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity;
+}
+
+/* Slide moon right and fade away during transition to EVCS */
+.portfolio-container.transitioning .hero-moon-wrapper {
+  transform: translate3d(500px, 0, 0) !important;
+  opacity: 0 !important;
+}
+
+/* Enable smooth transitions ONLY during page view transitions to avoid scroll lag */
+body.page-transition-active .hero-moon-wrapper {
+  transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1), opacity 1.2s ease-in-out !important;
+}
+
+.hero-moon-graphic {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.moon-texture {
+  position: absolute;
+  inset: 0;
+  background-image: url('../../assets/lunar_texture.jpg');
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  opacity: 1.0;
+  animation: rotate-moon 40s linear infinite;
+}
+
+.moon-shading {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, transparent 15%, rgba(0, 0, 0, 0.8) 60%, rgba(0, 0, 0, 0.98) 100%);
+  z-index: 2;
+  box-shadow: 
+    inset -15px -15px 45px rgba(0, 0, 0, 0.98),
+    inset 15px 15px 35px rgba(255, 255, 255, 0.05);
+}
+
+@keyframes rotate-moon {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: calc(var(--moon-size) * -1) 0; /* matches container width dynamically */
+  }
+}
+
+@keyframes rotate-moon-mobile {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -240px 0; /* matches mobile width of 240px */
+  }
+}
+
+/* ── Hero Text Layout ───────────────────────────────────────── */
+.hero-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2rem;
+  width: 100%;
+  max-width: 1200px; /* keep text layout matching 1200px desktop grid */
+  margin: 0 auto; /* center horizontally */
+  padding: 0 2rem; /* add horizontal padding for text spacing */
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10; /* sits on top of the moon graphic */
+}
+
+.hero-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.hero-name {
+  font-size: clamp(3.5rem, 8vw, 6.5rem);
+  font-weight: 850;
+  line-height: 0.9;
+  letter-spacing: 0.04em; /* generous spacing matching the Interstellar movie poster style */
+  margin: 0 0 1.8rem 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  position: relative;
+  display: inline-block;
+  color: #ffffff;
+  mix-blend-mode: difference; /* dynamically inverts text to black over white background elements */
+  z-index: 10;
+}
+
+/* Base character styling: solid white color */
+.hero-name .reveal-char {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Horizontal Cosmic Light Streak / Particle Beam behind the name */
+.hero-light-streak {
+  position: absolute;
+  left: 0;
+  right: -10vw; /* extends past screen edge on the right */
+  top: 42%;
+  transform: translateY(-50%);
+  height: clamp(1.2rem, 3.2vw, 2.3rem); /* centered horizontal light band */
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0) 32%, 
+    rgba(255, 255, 255, 0.25) 45%, 
+    rgba(255, 255, 255, 0.9) 60%, 
+    #ffffff 75%, 
+    #ffffff 100%
+  );
+  filter: blur(1.5px); /* slightly soft edge */
+  z-index: 2; /* sits behind the text (z-index 10) */
+  pointer-events: none;
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.5),
+    0 0 35px rgba(255, 255, 255, 0.2);
+}
+
+/* Outer soft glow for the light streak */
+.hero-light-streak::before {
+  content: '';
+  position: absolute;
+  inset: -25px 0;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0) 32%, 
+    rgba(255, 255, 255, 0.08) 45%, 
+    rgba(255, 255, 255, 0.25) 60%, 
+    rgba(255, 255, 255, 0.3) 75%, 
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  filter: blur(12px);
+  z-index: -1;
+}
+
+/* Cosmic spray/dust noise specks at the left transition point */
+.hero-light-streak::after {
+  content: '';
+  position: absolute;
+  left: 28%;
+  width: 35%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' result='noise'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3CfeComposite operator='in' in2='SourceGraphic'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.2;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Background Glow Layer: Soft cyan/teal radial glow behind "KABILESH" (the transition zone) */
+.hero-name::before {
+  content: '';
+  position: absolute;
+  left: 15%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 45%;
+  height: 120%;
+  background: radial-gradient(circle, rgba(58, 90, 110, 0.45) 0%, rgba(58, 90, 110, 0) 70%);
+  filter: blur(55px);
+  z-index: -1; /* behind the text */
+  pointer-events: none;
+}
+
+.hero-tagline-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.hero-role {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-color);
+}
+
+.hero-description {
+  font-size: clamp(1.2rem, 2.8vw, 1.85rem);
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.hero-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 2.2rem;
+  width: 100%;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.meta-val {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.hero-socials {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.hero-socials a {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+  position: relative;
+  padding-bottom: 2px;
+  overflow-wrap: anywhere;
+}
+
+.hero-socials a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--accent-color);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-socials a:hover {
+  color: var(--accent-color);
+}
+
+.hero-socials a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.hero-explore {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.hero-scroll-indicator {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-block;
+  transition: color var(--transition-fast);
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.hero-scroll-indicator::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--accent-color);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-scroll-indicator:hover {
+  color: var(--accent-color);
+}
+
+.hero-scroll-indicator:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}

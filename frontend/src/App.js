@@ -1,44 +1,40 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { fetchRegionsData, fetchOptimizationMap } from './services/api';
 import ControlPanel from './components/ControlPanel';
 import MapViewer from './components/MapViewer';
-import Portfolio from './components/Portfolio';
+import Portfolio from './pages/Portfolio';
+import BackendStatus from './components/BackendStatus';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
+import './styles/App.css';
 
 const DEFAULT_PARAMS = {
   region_type: 'all_india',
   region_name: '',
   district: '',
-  optimizer: 'greedy',
+  optimizer: 'weighted',
   k: 0,
   resolution: 120
 };
 
-const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL ||
-  (isLocalHost ? 'http://127.0.0.1:8000' : 'https://evcs-c5xn.onrender.com');
-
 function App() {
   const [appState, setAppState] = useState('PORTFOLIO');
-  // states: 'PORTFOLIO', 'APP'
   const [isReady, setIsReady] = useState(false);
   const [mapHtml, setMapHtml] = useState('');
+  const [pointsData, setPointsData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [regions, setRegions] = useState({ default_bounds: null, states: [] });
   const [regionsLoading, setRegionsLoading] = useState(false);
-
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [params, setParams] = useState(DEFAULT_PARAMS);
 
   const fetchRegions = async () => {
     setRegionsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/regions`);
-      setRegions(response.data);
+      const data = await fetchRegionsData();
+      setRegions(data);
     } catch (err) {
-      console.error('Error fetching regions:', err);
+      // Error handled in api service, but we keep local state in sync
     } finally {
       setRegionsLoading(false);
     }
@@ -48,18 +44,21 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/optimize`,
-        parameters
-      );
-      setMapHtml(response.data.map_html);
+      // Re-fetch regions if they failed to load earlier (e.g. backend was waking up)
+      if (!regions || !regions.states || regions.states.length === 0) {
+        const data = await fetchRegionsData();
+        setRegions(data);
+      }
+
+      const data = await fetchOptimizationMap(parameters);
+      setMapHtml(data.map_html);
+      setPointsData(data.points || []);
       return true;
     } catch (err) {
-      console.error('Error fetching map:', err);
       setError(
         err.response
           ? `Server error (${err.response.status}): ${err.response.statusText}`
-          : 'Failed to connect to backend. Please try again.'
+          : 'Failed to connect to backend server. Please verify the backend is running.'
       );
       return false;
     } finally {
@@ -67,27 +66,18 @@ function App() {
     }
   };
 
-  const mayAutoOpenAppRef = useRef(true);
-
   useEffect(() => {
-    let timeoutId;
     let isMounted = true;
-
-    timeoutId = setTimeout(() => {
-      mayAutoOpenAppRef.current = false;
-    }, 1000);
 
     const initialize = async () => {
       await fetchRegions();
       const success = await fetchMap(params, true);
 
-      if (isMounted && success) {
-        setIsReady(true);
-        if (mayAutoOpenAppRef.current) {
-          setAppState('APP');
+      if (isMounted) {
+        setHasInitialized(true);
+        if (success) {
+          setIsReady(true);
         }
-      } else if (isMounted && !success) {
-        setAppState('APP');
       }
     };
 
@@ -95,15 +85,17 @@ function App() {
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // -------------------------------------------------------------
+  // INSTANT VIEW SWITCH (Removed Wormhole Transition)
+  // -------------------------------------------------------------
   const handleToggle = () => {
     if (appState === 'APP') {
       setAppState('PORTFOLIO');
-    } else if (appState === 'PORTFOLIO') {
+    } else {
       setAppState('APP');
     }
   };
@@ -112,6 +104,10 @@ function App() {
     setParams(newParams);
     fetchMap(newParams);
   };
+
+  const isAppActive = appState === 'APP';
+  const showTab = hasInitialized || isReady;
+  const showStatus = appState === 'PORTFOLIO';
 
   const mainAppContent = (
     <div className="App">
@@ -131,41 +127,36 @@ function App() {
           regionsLoading={regionsLoading}
           onOptimize={handleOptimize}
           loading={loading}
+          error={error}
         />
-        <MapViewer mapHtml={mapHtml} loading={loading} error={error} />
+        <MapViewer
+          mapHtml={mapHtml}
+          pointsData={pointsData}
+          loading={loading}
+          error={error}
+          onRetry={async () => {
+            await fetchRegions();
+            await fetchMap(params);
+          }}
+        />
       </div>
     </div>
   );
 
-  const isAppActive = appState === 'APP';
-  const showTab = isReady;
-
   return (
     <>
+
       {showTab && (
-        <button 
+        <button
           className="portfolio-tab"
           onClick={handleToggle}
+          aria-label={appState === 'APP' ? 'Switch to portfolio view' : 'Switch to EV station optimizer app'}
         >
           {appState === 'APP' ? 'View Portfolio' : 'Go to EVCS'}
         </button>
       )}
-      
-      {appState === 'PORTFOLIO' && (
-        <div className={`backend-status ${isReady ? 'ready' : ''}`}>
-          {!isReady ? (
-            <>
-              <div className="spinner"></div>
-              Waking up backend...
-            </>
-          ) : (
-            <>
-              <div className="check-icon">✓</div>
-              Backend is online!
-            </>
-          )}
-        </div>
-      )}
+
+      {showStatus && <BackendStatus isReady={isReady} />}
 
       <div className={`portfolio-wrapper ${isAppActive ? 'zoom-through' : ''}`}>
         <Portfolio

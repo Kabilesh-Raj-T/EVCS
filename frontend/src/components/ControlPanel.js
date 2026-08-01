@@ -1,11 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './ControlPanel.css';
+import { animate, prefersReducedMotion } from '../utils/motion';
 
-function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimize, loading }) {
+function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimize, loading, error }) {
   const [formData, setFormData] = useState(params);
   const states = regions?.states || [];
   const selectedState = states.find(state => state.name === formData.region_name);
   const districts = selectedState?.districts || [];
+  // Track previous error to detect new errors (not just re-renders)
+  const prevErrorRef = useRef(null);
+
+  // ── Phase 6: Error shake on the submit button ─────────────────────────────
+  // Fires whenever the error prop changes to a truthy value (new error arrived).
+  if (error && error !== prevErrorRef.current) {
+    prevErrorRef.current = error;
+    if (!prefersReducedMotion()) {
+      // rAF so we don't trigger during render
+      requestAnimationFrame(() => {
+        animate('.action-btn', {
+          translateX: [0, -6, 6, -4, 4, -2, 2, 0],
+          duration: 450,
+          ease: 'linear',
+        });
+      });
+    }
+  } else if (!error) {
+    prevErrorRef.current = null;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,8 +99,9 @@ function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimi
         <h3 className="section-title">Region</h3>
 
         <div className="form-group mb-4">
-          <label className="form-label">Coverage Area</label>
+          <label htmlFor="ctrl-region-type" className="form-label">Coverage Area</label>
           <select
+            id="ctrl-region-type"
             name="region_type"
             className="form-select"
             value={formData.region_type}
@@ -97,8 +119,9 @@ function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimi
 
         {formData.region_type !== 'all_india' && (
           <div className="form-group mb-4">
-            <label className="form-label">State</label>
+            <label htmlFor="ctrl-region-name" className="form-label">State</label>
             <select
+              id="ctrl-region-name"
               name="region_name"
               className="form-select"
               value={formData.region_name}
@@ -120,8 +143,9 @@ function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimi
 
         {formData.region_type === 'district' && (
           <div className="form-group mb-4">
-            <label className="form-label">District</label>
+            <label htmlFor="ctrl-district" className="form-label">District</label>
             <select
+              id="ctrl-district"
               name="district"
               className="form-select"
               value={formData.district}
@@ -144,11 +168,12 @@ function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimi
         <h3 className="section-title">Optimization</h3>
 
         <div className="form-group mb-4">
-          <label className="form-label">Optimizer</label>
+          <label htmlFor="ctrl-optimizer" className="form-label">Optimizer</label>
           <select
+            id="ctrl-optimizer"
             name="optimizer"
             className="form-select"
-            value={formData.optimizer || 'greedy'}
+            value={formData.optimizer || 'weighted'}
             onChange={handleTextChange}
             disabled={loading}
           >
@@ -158,8 +183,9 @@ function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimi
         </div>
 
         <div className="form-group mb-4">
-          <label className="form-label">Number of New Stations</label>
+          <label htmlFor="ctrl-k" className="form-label">Number of New Stations</label>
           <input
+            id="ctrl-k"
             type="number"
             name="k"
             className="form-control"
@@ -175,8 +201,9 @@ function ControlPanel({ params, defaultParams, regions, regionsLoading, onOptimi
         </div>
 
         <div className="form-group mb-4">
-          <label className="form-label">Grid Resolution</label>
+          <label htmlFor="ctrl-resolution" className="form-label">Grid Resolution</label>
           <input
+            id="ctrl-resolution"
             type="number"
             name="resolution"
             className="form-control"

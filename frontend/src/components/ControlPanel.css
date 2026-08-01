@@ -6,7 +6,7 @@
   border: 1px solid var(--border-subtle) !important;
   border-radius: 4px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2) !important;
-  padding: 16px 20px; /* Tighter vertical padding */
+  padding: 16px 20px;
   font-family: var(--font-editorial);
   width: 420px;
   height: 100%;
@@ -14,14 +14,6 @@
   overflow-x: hidden;
   flex-shrink: 0;
   transition: border-color var(--transition-fast);
-}
-
-@media (max-width: 900px) {
-  .control-panel {
-    width: 100% !important;
-    height: auto !important;
-    overflow-y: auto !important;
-  }
 }
 
 .control-panel:hover {
@@ -32,7 +24,7 @@
   font-size: 1.45rem;
   font-weight: 800;
   color: var(--text-primary) !important;
-  margin-bottom: 0.2rem; /* Tightened */
+  margin-bottom: 0.2rem;
   letter-spacing: -0.03em;
   text-shadow: none !important;
 }
@@ -40,13 +32,13 @@
 .panel-subtitle {
   font-size: 0.88rem;
   color: var(--text-secondary) !important;
-  margin-bottom: 0.5rem; /* Tightened */
+  margin-bottom: 0.5rem;
   line-height: 1.4;
 }
 
 .section-title {
-  margin-top: 0.6rem; /* Tightened */
-  margin-bottom: 0.4rem; /* Tightened */
+  margin-top: 0.6rem;
+  margin-bottom: 0.4rem;
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -58,7 +50,7 @@
 }
 
 .form-group {
-  margin-bottom: 0.55rem; /* Tightened spacing */
+  margin-bottom: 0.55rem;
 }
 
 .control-panel .form-control,
@@ -68,7 +60,7 @@
   border: 1px solid var(--border-subtle) !important;
   border-radius: 4px !important;
   color: var(--text-primary) !important;
-  padding: 8px 12px !important; /* Compact inputs */
+  padding: 8px 12px !important;
   font-size: 0.9rem;
   font-weight: 500;
   font-family: monospace, sans-serif;
@@ -92,7 +84,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   display: block;
-  margin-bottom: 0.25rem !important; /* Tightened label margin */
+  margin-bottom: 0.25rem !important;
 }
 
 .control-panel .text-hint {
@@ -105,19 +97,19 @@
 .grid-inputs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem 0.75rem; /* Tightened bounds inputs */
+  gap: 0.5rem 0.75rem;
   margin-bottom: 0.6rem;
 }
 
 .button-group {
   display: flex;
-  flex-direction: row; /* Align buttons horizontally! */
+  flex-direction: row;
   gap: 12px;
-  margin-top: 0.8rem; /* Tightened margin */
+  margin-top: 0.8rem;
 }
 
 .action-btn {
-  flex: 1.8; /* Takes more space for "Optimize" */
+  flex: 1.8;
   background: var(--accent-color) !important;
   color: #0D0D0D !important;
   border: 1px solid var(--accent-color) !important;
@@ -127,7 +119,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 10px !important; /* Compact padding */
+  padding: 10px !important;
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: none !important;
@@ -148,7 +140,7 @@
 }
 
 .reset-btn {
-  flex: 1; /* Takes less space for "Reset" */
+  flex: 1;
   color: var(--text-primary) !important;
   border: 1px solid var(--border-subtle) !important;
   background: transparent !important;
@@ -158,7 +150,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 10px !important; /* Compact padding */
+  padding: 10px !important;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -193,4 +185,23 @@
 .control-panel input[type=number] {
   appearance: textfield;
   -moz-appearance: textfield;
+}
+
+@media (max-width: 900px) {
+  .control-panel {
+    width: 100% !important;
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .action-btn, .reset-btn {
+    width: 100%;
+    flex: none;
+  }
 }

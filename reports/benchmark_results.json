@@ -1,0 +1,70 @@
+{
+  "dataset": {
+    "existing_charging_stations": 39495,
+    "demand_feature_candidate_locations": 4694,
+    "generated_candidate_pool": 10508,
+    "states_or_uts": 38,
+    "districts": 733,
+    "covered_region": "India"
+  },
+  "algorithm": {
+    "optimization": "KD-tree accelerated greedy k-center",
+    "demand_pipeline": "Processed demand_features.parquet from population, airports, boundaries, and OSM-derived features when available"
+  },
+  "runtime_benchmarks": [
+    {
+      "candidate_locations_processed": 1000,
+      "recommended_stations_k": 25,
+      "runs": 3,
+      "average_seconds": 0.017038733339480434,
+      "individual_seconds": [
+        0.017768599995179102,
+        0.017048400011844933,
+        0.01629920001141727
+      ],
+      "selected_count": 25
+    },
+    {
+      "candidate_locations_processed": 5000,
+      "recommended_stations_k": 25,
+      "runs": 3,
+      "average_seconds": 0.026585733343381435,
+      "individual_seconds": [
+        0.026564400002826005,
+        0.02744530001655221,
+        0.02574750001076609
+      ],
+      "selected_count": 25
+    },
+    {
+      "candidate_locations_processed": 10000,
+      "recommended_stations_k": 25,
+      "runs": 3,
+      "average_seconds": 0.038888933340786025,
+      "individual_seconds": [
+        0.03784010000526905,
+        0.04058120000991039,
+        0.038245500007178634
+      ],
+      "selected_count": 25
+    }
+  ],
+  "coverage_impact": {
+    "evaluation_candidate_locations": 10000,
+    "recommended_stations_k": 25,
+    "average_nearest_charger_km_before": 14.740657098972877,
+    "average_nearest_charger_km_after": 12.382063930776802,
+    "maximum_nearest_charger_km_before": 543.3418519679265,
+    "maximum_nearest_charger_km_after": 83.71844172164758,
+    "average_distance_improvement_pct": 16.000597207843743
+  },
+  "kdtree_vs_naive": {
+    "query_candidate_locations": 1000,
+    "reference_existing_stations": 39495,
+    "runs": 3,
+    "naive_average_seconds": 1.8747649666717432,
+    "kdtree_average_seconds": 0.01381786666267241,
+    "speedup_x": 135.67687490690832,
+    "max_distance_delta_km": 0.0
+  }
+}

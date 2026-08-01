@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "homepage": "https://kabilesh-raj-t.github.io/EVCS",
-
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -12,11 +11,11 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build"
   },
-
   "eslintConfig": {
-    "extends": ["react-app"]
+    "extends": [
+      "react-app"
+    ]
   },
-
   "browserslist": {
     "production": [
       ">0.2%",
@@ -29,16 +28,16 @@
       "last 1 safari version"
     ]
   },
-
   "dependencies": {
+    "animejs": "^4.5.0",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
     "react": "^19.2.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "three": "^0.185.1"
   },
-
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "yaml": "2.9.0"
