@@ -25,7 +25,6 @@ function App() {
   const [error, setError] = useState(null);
   const [regions, setRegions] = useState({ default_bounds: null, states: [] });
   const [regionsLoading, setRegionsLoading] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
   const [params, setParams] = useState(DEFAULT_PARAMS);
 
   const fetchRegions = async () => {
@@ -74,7 +73,6 @@ function App() {
       const success = await fetchMap(params, true);
 
       if (isMounted) {
-        setHasInitialized(true);
         if (success) {
           setIsReady(true);
         }
