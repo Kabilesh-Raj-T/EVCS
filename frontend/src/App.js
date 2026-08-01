@@ -106,7 +106,7 @@ function App() {
   };
 
   const isAppActive = appState === 'APP';
-  const showTab = hasInitialized || isReady;
+  const showTab = isReady;
   const showStatus = appState === 'PORTFOLIO';
 
   const mainAppContent = (
