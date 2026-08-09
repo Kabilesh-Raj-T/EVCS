@@ -1,0 +1,48 @@
+/* Global Backend Status */
+.backend-status {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(23, 23, 23, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 16px;
+  border-radius: 4px; /* Consistent editorial styling */
+  font-family: var(--font-editorial);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 2000;
+  transition: all var(--transition-normal);
+}
+
+.backend-status.ready {
+  color: var(--text-primary);
+  border-color: rgba(167, 139, 250, 0.2); /* Lavender glow highlight border */
+}
+
+.backend-status.ready .check-icon {
+  color: var(--accent-color);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.check-icon {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,207 @@
+/* ControlPanel.css - Premium Editorial Style */
+
+.control-panel {
+  background: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 4px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2) !important;
+  padding: 16px 20px;
+  font-family: var(--font-editorial);
+  width: 420px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.control-panel:hover {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.panel-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary) !important;
+  margin-bottom: 0.2rem;
+  letter-spacing: -0.03em;
+  text-shadow: none !important;
+}
+
+.panel-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary) !important;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.section-title {
+  margin-top: 0.6rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-color) !important;
+  text-shadow: none !important;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 4px;
+}
+
+.form-group {
+  margin-bottom: 0.55rem;
+}
+
+.control-panel .form-control,
+.control-panel .form-select {
+  width: 100%;
+  background: #090909 !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 4px !important;
+  color: var(--text-primary) !important;
+  padding: 8px 12px !important;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: monospace, sans-serif;
+  margin-bottom: 0;
+  transition: all var(--transition-fast);
+  box-shadow: none !important;
+}
+
+.control-panel .form-control:focus,
+.control-panel .form-select:focus {
+  background: #0d0d0d !important;
+  border-color: var(--accent-color) !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+.control-panel .form-label {
+  color: var(--text-secondary) !important;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 0.25rem !important;
+}
+
+.control-panel .text-hint {
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem;
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.grid-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-top: 0.8rem;
+}
+
+.action-btn {
+  flex: 1.8;
+  background: var(--accent-color) !important;
+  color: #0D0D0D !important;
+  border: 1px solid var(--accent-color) !important;
+  border-radius: 4px;
+  font-family: var(--font-editorial);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px !important;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: none !important;
+}
+
+.action-btn:hover {
+  background: #b59ffb !important;
+  border-color: #b59ffb !important;
+  transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: transparent !important;
+  color: var(--text-secondary) !important;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reset-btn {
+  flex: 1;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: transparent !important;
+  border-radius: 4px;
+  font-family: var(--font-editorial);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px !important;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--text-primary) !important;
+}
+
+.reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollbars for panel if contents overflow */
+.control-panel::-webkit-scrollbar {
+  width: 4px;
+}
+.control-panel::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 2px;
+}
+
+/* Chrome, Safari, Edge - Remove number spin arrows */
+.control-panel input[type=number]::-webkit-inner-spin-button,
+.control-panel input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.control-panel input[type=number] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+@media (max-width: 900px) {
+  .control-panel {
+    width: 100% !important;
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .action-btn, .reset-btn {
+    width: 100%;
+    flex: none;
+  }
+}

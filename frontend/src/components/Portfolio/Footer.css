@@ -1,0 +1,20 @@
+
+/* Footer Section */
+.portfolio-footer {
+  max-width: 1200px;
+  margin: 5rem auto 3rem auto;
+  padding: 2.2rem 2rem 0 2rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-credits {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
