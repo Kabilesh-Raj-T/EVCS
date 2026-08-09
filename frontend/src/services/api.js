@@ -21,7 +21,7 @@ export const fetchRegionsData = async () => {
 
 export const fetchOptimizationMap = async (parameters) => {
   try {
-    const response = await apiClient.post('/optimize', parameters, { timeout: 12000 });
+    const response = await apiClient.post('/optimize', parameters, { timeout: 60000 });
     return response.data;
   } catch (err) {
     console.warn('Error or timeout fetching map:', err);
