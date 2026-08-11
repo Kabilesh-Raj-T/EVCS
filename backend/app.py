@@ -98,7 +98,7 @@ def optimize():
         use_weighted = optimizer in {"weighted", "demand", "demandweighted"}
         points_data = []
         if k > 0:
-            weight = 0.85 if use_weighted else 0.0
+            weight = 0.75 if use_weighted else 0.0
             points_data = optimization.optimize_locations(region, k, resolution, demand_weight=weight)
             if not points_data:
                 return jsonify({"error": "No candidate points found"}), 400

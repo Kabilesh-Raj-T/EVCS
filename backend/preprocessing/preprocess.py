@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import KDTree
 
-from backend.scoring.demand_scoring import compute_demand_score
 from backend.utils import latlon_to_unit_xyz, chord_to_great_circle_km
 from .config import (
     CACHE_DIR, COMMERCIAL_DENSITY_RADIUS_KM, CURRENT_ADM1_GEOJSON, CURRENT_BEE_CSV,
@@ -167,7 +166,13 @@ def run_pipeline(resolution: int = DEFAULT_GRID_RESOLUTION) -> pd.DataFrame:
     # airport_proximity: inverse distance to nearest airport (closer = more urban/developed)
     features["airport_proximity_score"] = _minmax(features["nearest_airport_distance"], invert=True)
     features["coverage_gap_score"] = _minmax(features["nearest_existing_station_distance"])
-    features["demand_score"] = compute_demand_score(features)
+    
+    # ── Calculate final demand score (Pure Demand, No Coverage) ──
+    features["demand_score"] = (
+        features["population_score"].fillna(0) * 0.40 +
+        features["commercial_density_score"].fillna(0) * 0.40 +
+        features["airport_proximity_score"].fillna(0) * 0.20
+    ).clip(0.0, 1.0)
 
     # ── Persist spatial indexes for inspection ────────────────────────────────
     with (CACHE_DIR / "spatial_indexes.pkl").open("wb") as fh:
