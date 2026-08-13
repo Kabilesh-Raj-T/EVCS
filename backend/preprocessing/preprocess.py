@@ -310,12 +310,12 @@ def run_pipeline(resolution: int = DEFAULT_GRID_RESOLUTION) -> pd.DataFrame:
     
     # ── Calculate final demand score (Pure Demand, No Coverage) ──
     raw_demand = (
-        features["ev_density_score"].fillna(0) * 0.30 +
-        features["commercial_density_score"].fillna(0) * 0.10 +
-        features["traffic_congestion_score"].fillna(0) * 0.10 +
-        features["economic_score"].fillna(0) * 0.25 +
-        features["population_score"].fillna(0) * 0.15 +
-        features["road_accessibility_score"].fillna(0) * 0.10
+        features["ev_density_score"].fillna(0) * 0.364 +
+        features["traffic_congestion_score"].fillna(0) * 0.248 +
+        features["commercial_density_score"].fillna(0) * 0.142 +
+        features["road_accessibility_score"].fillna(0) * 0.116 +
+        features["economic_score"].fillna(0) * 0.079 +
+        features["population_score"].fillna(0) * 0.052
     )
     features["demand_score"] = _minmax(raw_demand)
 
