@@ -24,8 +24,26 @@ from .config import (
 logger = logging.getLogger(__name__)
 EARTH_RADIUS_KM = 6371.0
 
-SCORE_COLUMNS = ["population_score", "commercial_density_score", "airport_proximity_score", "coverage_gap_score"]
-DISTANCE_COLUMNS = ["nearest_existing_station_distance", "nearest_airport_distance"]
+SCORE_COLUMNS = ["population_score", "commercial_density_score", "economic_score", "coverage_gap_score", "road_accessibility_score", "traffic_congestion_score", "ev_density_score"]
+DISTANCE_COLUMNS = ["nearest_existing_station_distance", "nearest_highway_distance", "nearest_traffic_node_distance"]
+
+STATE_EV_PENETRATION = {
+    "maharashtra": 1.0, "karnataka": 0.95, "tamilnadu": 0.90, "delhi": 0.85,
+    "uttarpradesh": 0.85, "gujarat": 0.80, "rajasthan": 0.65, "kerala": 0.60,
+    "telangana": 0.55, "madhyapradesh": 0.50, "andhrapradesh": 0.45, "haryana": 0.40,
+    "punjab": 0.35, "odisha": 0.30, "bihar": 0.25, "westbengal": 0.20,
+    "chhattisgarh": 0.15, "jharkhand": 0.10, "assam": 0.05
+}
+
+STATE_GDP_PER_CAPITA = {
+    "goa": 1.0, "sikkim": 0.95, "delhi": 0.90, "chandigarh": 0.85,
+    "haryana": 0.80, "telangana": 0.75, "karnataka": 0.70, "gujarat": 0.65,
+    "tamilnadu": 0.60, "kerala": 0.55, "maharashtra": 0.50, "uttarakhand": 0.45,
+    "punjab": 0.40, "himachalpradesh": 0.35, "andhrapradesh": 0.30, "mizoram": 0.25,
+    "arunachalpradesh": 0.20, "rajasthan": 0.15, "westbengal": 0.10, "odisha": 0.08,
+    "chhattisgarh": 0.06, "madhyapradesh": 0.04, "assam": 0.03, "uttarpradesh": 0.02,
+    "jharkhand": 0.01, "bihar": 0.0
+}
 
 _STATE_OVERRIDES = {
     "andamanandnicobar": "Andaman & Nicobar", "andhrapradesh": "Andhra Pradesh",
@@ -88,6 +106,121 @@ def _write_json(path: Path, data: dict) -> None:
                   default=lambda v: v.item() if isinstance(v, (np.integer, np.floating)) else str(v))
 
 
+def _load_or_download_highways(geom=None) -> pd.DataFrame:
+    path = RAW_DIR / "osm_highways.csv"
+    if path.exists():
+        return _standardize_coords(pd.read_csv(path, low_memory=False))
+        
+    logger.info("Downloading major highways from Overpass API (this may take a minute)...")
+    query_template = """
+    [out:json][timeout:180];
+    way["highway"~"motorway|trunk|primary"]({min_lat},{min_lon},{max_lat},{max_lon});
+    out geom;
+    """
+    try:
+        import requests
+        import time
+        headers = {"User-Agent": "EVCS-Optimizer/1.0"}
+        road_points = set()
+        
+        # Split India bounding box into 4x4 grid to avoid 406 Not Acceptable limits
+        lat_bins = np.linspace(INDIA_BOUNDS["lat_min"], INDIA_BOUNDS["lat_max"], 5)
+        lon_bins = np.linspace(INDIA_BOUNDS["lon_min"], INDIA_BOUNDS["lon_max"], 5)
+        
+        for i in range(4):
+            for j in range(4):
+                min_l, max_l = lat_bins[i], lat_bins[i+1]
+                min_ln, max_ln = lon_bins[j], lon_bins[j+1]
+                q = query_template.format(min_lat=min_l, min_lon=min_ln, max_lat=max_l, max_lon=max_ln)
+                
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        resp = requests.post("https://overpass-api.de/api/interpreter", data={"data": q}, headers=headers, timeout=190)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            for el in data.get("elements", []):
+                                for pt in el.get("geometry", []):
+                                    road_points.add((round(pt["lat"], 5), round(pt["lon"], 5)))
+                            break  # Success, break retry loop
+                        elif resp.status_code == 429:
+                            time.sleep(10 * (attempt + 1))  # Rate limited, wait longer
+                    except requests.exceptions.RequestException:
+                        if attempt == max_retries - 1:
+                            logger.warning(f"Failed chunk {i},{j} after {max_retries} attempts.")
+                        time.sleep(5 * (attempt + 1))
+                
+                time.sleep(3) # Be nice to Overpass
+                
+        df = pd.DataFrame(list(road_points), columns=["latitude", "longitude"])
+        out_df = _standardize_coords(df)
+        
+        if geom is not None and not out_df.empty:
+            pts_gdf = gpd.GeoDataFrame(out_df, geometry=gpd.points_from_xy(out_df["longitude"], out_df["latitude"]), crs="EPSG:4326")
+            out_df = out_df.loc[pts_gdf.intersects(geom).to_numpy()].reset_index(drop=True)
+            
+        out_df.to_csv(path, index=False)
+        return out_df
+    except Exception as e:
+        logger.warning(f"Failed to download highways: {e}")
+        return pd.DataFrame(columns=["latitude", "longitude"])
+
+def _load_or_download_traffic_nodes(geom=None) -> pd.DataFrame:
+    path = RAW_DIR / "osm_traffic_nodes.csv"
+    if path.exists():
+        return _standardize_coords(pd.read_csv(path, low_memory=False))
+        
+    logger.info("Downloading traffic bottleneck nodes from Overpass API (this may take a minute)...")
+    query_template = """
+    [out:json][timeout:190];
+    node["highway"~"motorway_junction|traffic_signals"]({min_lat},{min_lon},{max_lat},{max_lon});
+    out geom;
+    """
+    try:
+        import requests
+        import time
+        headers = {"User-Agent": "EVCS-Optimizer/1.0"}
+        road_points = set()
+        
+        lat_bins = np.linspace(INDIA_BOUNDS["lat_min"], INDIA_BOUNDS["lat_max"], 5)
+        lon_bins = np.linspace(INDIA_BOUNDS["lon_min"], INDIA_BOUNDS["lon_max"], 5)
+        
+        for i in range(4):
+            for j in range(4):
+                min_l, max_l = lat_bins[i], lat_bins[i+1]
+                min_ln, max_ln = lon_bins[j], lon_bins[j+1]
+                q = query_template.format(min_lat=min_l, min_lon=min_ln, max_lat=max_l, max_lon=max_ln)
+                
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        resp = requests.post("https://overpass-api.de/api/interpreter", data={"data": q}, headers=headers, timeout=190)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            for el in data.get("elements", []):
+                                road_points.add((round(el["lat"], 5), round(el["lon"], 5)))
+                            break
+                        elif resp.status_code == 429:
+                            time.sleep(10 * (attempt + 1))
+                    except requests.exceptions.RequestException:
+                        time.sleep(5 * (attempt + 1))
+                time.sleep(3)
+                
+        df = pd.DataFrame(list(road_points), columns=["latitude", "longitude"])
+        out_df = _standardize_coords(df)
+        if geom is not None and not out_df.empty:
+            pts_gdf = gpd.GeoDataFrame(out_df, geometry=gpd.points_from_xy(out_df["longitude"], out_df["latitude"]), crs="EPSG:4326")
+            out_df = out_df.loc[pts_gdf.intersects(geom).to_numpy()].reset_index(drop=True)
+            
+        out_df.to_csv(path, index=False)
+        return out_df
+    except Exception as e:
+        logger.warning(f"Failed to download traffic nodes: {e}")
+        return pd.DataFrame(columns=["latitude", "longitude"])
+
+
+
+
 def run_pipeline(resolution: int = DEFAULT_GRID_RESOLUTION) -> pd.DataFrame:
     for p in (PROCESSED_DIR, CACHE_DIR, REPORTS_DIR):
         p.mkdir(parents=True, exist_ok=True)
@@ -136,9 +269,14 @@ def run_pipeline(resolution: int = DEFAULT_GRID_RESOLUTION) -> pd.DataFrame:
     # ── Compute spatial distance features ─────────────────────────────────────
     features = candidates.copy()
     features["nearest_existing_station_distance"] = _nearest_km(chargers, features)
-    features["nearest_airport_distance"] = _nearest_km(airports, features)
+    
+    highways = _load_or_download_highways(geom)
+    logger.info("Loaded %d highway nodes", len(highways))
+    features["nearest_highway_distance"] = _nearest_km(highways, features)
 
-
+    traffic_nodes = _load_or_download_traffic_nodes(geom)
+    logger.info("Loaded %d traffic bottleneck nodes", len(traffic_nodes))
+    features["nearest_traffic_node_distance"] = _nearest_km(traffic_nodes, features)
 
     # ── Commercial POI density (count within 5 km radius) ────────────────────
     if not pois.empty:
@@ -163,15 +301,21 @@ def run_pipeline(resolution: int = DEFAULT_GRID_RESOLUTION) -> pd.DataFrame:
     # ── Score columns ─────────────────────────────────────────────────────────
     features["population_score"] = _minmax(pop)
     features["commercial_density_score"] = _minmax(pd.Series(comm_counts, index=features.index))
-    # airport_proximity: inverse distance to nearest airport (closer = more urban/developed)
-    features["airport_proximity_score"] = _minmax(features["nearest_airport_distance"], invert=True)
+    # economic_score: proxy for purchasing power
+    features["economic_score"] = features["state_key"].map(STATE_GDP_PER_CAPITA).fillna(0.0)
     features["coverage_gap_score"] = _minmax(features["nearest_existing_station_distance"])
+    features["road_accessibility_score"] = _minmax(features["nearest_highway_distance"], invert=True)
+    features["traffic_congestion_score"] = _minmax(features["nearest_traffic_node_distance"], invert=True)
+    features["ev_density_score"] = features["state_key"].map(STATE_EV_PENETRATION).fillna(0.05)
     
     # ── Calculate final demand score (Pure Demand, No Coverage) ──
     features["demand_score"] = (
-        features["population_score"].fillna(0) * 0.40 +
-        features["commercial_density_score"].fillna(0) * 0.40 +
-        features["airport_proximity_score"].fillna(0) * 0.20
+        features["ev_density_score"].fillna(0) * 0.30 +
+        features["commercial_density_score"].fillna(0) * 0.10 +
+        features["traffic_congestion_score"].fillna(0) * 0.10 +
+        features["economic_score"].fillna(0) * 0.25 +
+        features["population_score"].fillna(0) * 0.15 +
+        features["road_accessibility_score"].fillna(0) * 0.10
     ).clip(0.0, 1.0)
 
     # ── Persist spatial indexes for inspection ────────────────────────────────

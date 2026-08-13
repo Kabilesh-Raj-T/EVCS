@@ -8,9 +8,11 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from config import CSV_PATH, DEMAND_FEATURES_PATH, GEOJSON_PATH, INDIA_DEFAULT_BOUNDS
-from spatial import attach_district_boundaries, build_state_regions, load_adm2_boundary, serialize_regions
-from utils import merge_geometries, normalize_name
+import sys
+import pickle
+import subprocess
+from config import CSV_PATH, DEMAND_FEATURES_PATH, INDIA_DEFAULT_BOUNDS, PREPROCESSED_GEOMETRIES_PATH
+from utils import normalize_name
 
 logger = logging.getLogger("evcsapi")
 
@@ -30,16 +32,28 @@ def load_data():
     with _lock:
         if data_loaded:
             return
-        india_boundary = gpd.read_file(GEOJSON_PATH).to_crs(epsg=4326)
-        polygon = merge_geometries(india_boundary)
+            
+        # Load stations data
         df = pd.read_csv(CSV_PATH, usecols=["latitude_num", "longitude_num", "state", "district"], low_memory=False)
         df = df.dropna(subset=["latitude_num", "longitude_num"]).reset_index(drop=True)
         df["_state_key"] = df["state"].map(normalize_name)
         stations = df
         existing_coords = df[["latitude_num", "longitude_num"]].to_numpy(dtype=float)
-        state_regions = build_state_regions(india_boundary)
-        attach_district_boundaries(state_regions, load_adm2_boundary(), india_boundary)
-        REGION_OPTIONS = serialize_regions(state_regions)
+        
+        # Ensure geometries are preprocessed
+        if not os.path.exists(PREPROCESSED_GEOMETRIES_PATH):
+            logger.warning("Geometry cache missing. Running preprocessing script...")
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "preprocessing", "preprocess_geometries.py")
+            subprocess.run([sys.executable, script_path], check=True)
+            
+        with open(PREPROCESSED_GEOMETRIES_PATH, "rb") as f:
+            cache = pickle.load(f)
+        india_boundary = cache["india_boundary"]
+        polygon = cache["polygon"]
+        state_regions = cache["state_regions"]
+        REGION_OPTIONS = cache["REGION_OPTIONS"]
+        logger.info("Loaded geometries from cache.")
+            
         data_loaded = True
         logger.info("Loaded %d stations, %d districts", len(existing_coords), sum(len(s["districts"]) for s in state_regions.values()))
 

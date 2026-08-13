@@ -21,7 +21,7 @@ DATASET_SUMMARY_PATH = REPORTS_DIR / "dataset_summary.json"
 DATA_QUALITY_REPORT_PATH = REPORTS_DIR / "data_quality_report.json"
 FEATURE_STATISTICS_PATH = REPORTS_DIR / "feature_statistics.json"
 
-INDIA_BOUNDS = {"lat_min": 6.7, "lat_max": 35.6, "lon_min": 68.1, "lon_max": 97.5}
+INDIA_BOUNDS = {"lat_min": 6.7, "lat_max": 37.5, "lon_min": 68.1, "lon_max": 97.5}
 DEFAULT_GRID_RESOLUTION = 200
 DEFAULT_NORMALIZATION_METHOD = "minmax"
 COMMERCIAL_DENSITY_RADIUS_KM = 5.0
@@ -32,5 +32,4 @@ DATASET_SOURCES = {
     "geoboundaries_adm2": {"name": "geoBoundaries ADM2", "source": "geoBoundaries", "url": "https://www.geoboundaries.org", "required": True},
     "worldpop_india_population_density": {"name": "WorldPop Population", "source": "WorldPop", "url": "https://data.worldpop.org", "required": True},
     "overture_commercial_pois": {"name": "Overture Maps Commercial POIs", "source": "Overture Maps", "url": "https://overturemaps.org", "required": True},
-    "ourairports_india": {"name": "OurAirports India", "source": "OurAirports", "url": "https://ourairports.com", "required": False},
 }
