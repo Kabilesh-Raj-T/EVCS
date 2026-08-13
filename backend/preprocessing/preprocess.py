@@ -309,14 +309,15 @@ def run_pipeline(resolution: int = DEFAULT_GRID_RESOLUTION) -> pd.DataFrame:
     features["ev_density_score"] = features["state_key"].map(STATE_EV_PENETRATION).fillna(0.05)
     
     # ── Calculate final demand score (Pure Demand, No Coverage) ──
-    features["demand_score"] = (
+    raw_demand = (
         features["ev_density_score"].fillna(0) * 0.30 +
         features["commercial_density_score"].fillna(0) * 0.10 +
         features["traffic_congestion_score"].fillna(0) * 0.10 +
         features["economic_score"].fillna(0) * 0.25 +
         features["population_score"].fillna(0) * 0.15 +
         features["road_accessibility_score"].fillna(0) * 0.10
-    ).clip(0.0, 1.0)
+    )
+    features["demand_score"] = _minmax(raw_demand)
 
     # ── Persist spatial indexes for inspection ────────────────────────────────
     with (CACHE_DIR / "spatial_indexes.pkl").open("wb") as fh:
